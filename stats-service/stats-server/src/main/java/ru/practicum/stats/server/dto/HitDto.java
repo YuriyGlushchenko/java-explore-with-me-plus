@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class HitDto {
 
-    private String app;                     // Идентификатор сервиса
+    private String app;
 
-    private String uri;                      // URI запроса
+    private String uri;
 
-    private String ip;                        // IP-адрес пользователя
+    private String ip;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime timestamp;          // Дата и время запроса
+    private LocalDateTime timestamp;
 }
