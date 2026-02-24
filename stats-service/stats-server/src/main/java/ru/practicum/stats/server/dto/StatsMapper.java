@@ -1,10 +1,5 @@
 package ru.practicum.stats.server.dto;
 
-import ru.practicum.stats.server.dto.HitDto;        // тот же пакет!
-import ru.practicum.stats.server.dto.ViewStatsDto;  // тот же пакет!
-import ru.practicum.stats.server.model.EndpointHit;
-
-
 import ru.practicum.stats.server.model.EndpointHit;
 
 public class StatsMapper {

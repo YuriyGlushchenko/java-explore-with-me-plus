@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.stats.server.repository.StatsRepository;
 import ru.practicum.stats.server.dto.HitDto;
 import ru.practicum.stats.server.dto.StatsMapper;
 import ru.practicum.stats.server.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
+import ru.practicum.stats.server.repository.StatsRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,10 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StatsServiceImpl implements StatsService {
-    private final StatsRepository repository;
-
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final StatsRepository repository;
 
     @Transactional
     public void saveHit(HitDto hitDto) {
