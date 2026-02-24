@@ -28,6 +28,18 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<!-- H2 Database - версия для всех модулей -->
+			<dependency>
+				<groupId>com.h2database</groupId>
+				<artifactId>h2</artifactId>
+				<version>2.2.224</version>
+				<scope>runtime</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -61,17 +73,6 @@
 								<groupId>org.projectlombok</groupId>
 								<artifactId>lombok</artifactId>
 								<version>1.18.32</version>
-							</path>
-							<path>
-								<groupId>com.querydsl</groupId>
-								<artifactId>querydsl-apt</artifactId>
-								<version>5.1.0</version>
-								<classifier>jakarta</classifier>
-							</path>
-							<path>
-								<groupId>jakarta.persistence</groupId>
-								<artifactId>jakarta.persistence-api</artifactId>
-								<version>3.1.0</version>
 							</path>
 						</annotationProcessorPaths>
 					</configuration>
