@@ -1,10 +1,12 @@
 package ru.practicum.stats.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -14,10 +16,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class HitDto {
 
+    @NotBlank
     private String app;
 
+    @NotBlank
     private String uri;
 
+    @NotBlank
     private String ip;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
