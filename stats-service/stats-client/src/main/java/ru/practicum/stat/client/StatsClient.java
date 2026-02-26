@@ -3,8 +3,8 @@ package ru.practicum.stat.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,8 +32,7 @@ public class StatsClient {
         try {
             HttpEntity<ParamHitDto> requestEntity = new HttpEntity<>(paramHitDto);
             template.exchange(statUrl + "/hit", POST, requestEntity, Object.class);
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             log.warn("Не удалось сохранить хит: {}", e.getMessage());
         }
     }
@@ -54,7 +53,8 @@ public class StatsClient {
                     url,
                     GET,
                     null,
-                    new ParameterizedTypeReference<List<StatDto>>() {}
+                    new ParameterizedTypeReference<List<StatDto>>() {
+                    }
             );
             return response.getBody();
         } catch (RuntimeException e) {
