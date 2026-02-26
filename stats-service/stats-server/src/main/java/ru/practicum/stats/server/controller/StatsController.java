@@ -36,7 +36,7 @@ public class StatsController {
             @RequestParam(defaultValue = "false") boolean unique) {
 
         log.info("GET /stats with start={}, end={}, uris={}, unique={}", start, end, uris, unique);
-        if (end.isBefore(start)){
+        if (end.isBefore(start)) {
             throw new ValidationException("start", start, "stаrt should be BEFORE end");
         }
         return statsService.getStats(start, end, uris, unique);
