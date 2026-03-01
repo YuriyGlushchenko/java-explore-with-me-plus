@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.stats.server.dto.HitDto;
+import ru.practicum.stat.dto.EndpointHitDto;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +28,7 @@ class StatsControllerTest {
 
     @Test
     void shouldCreateHit() throws Exception {
-        HitDto hit = HitDto.builder()
+        EndpointHitDto hit = EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/1")
                 .ip("127.0.0.1")

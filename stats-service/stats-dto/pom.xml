@@ -12,9 +12,9 @@
     <artifactId>stats-dto</artifactId>
 
     <properties>
-<!--        <maven.compiler.source>21</maven.compiler.source>-->
-<!--        <maven.compiler.target>21</maven.compiler.target>-->
-<!--        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>-->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -27,6 +27,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
         </dependency>
     </dependencies>
 
