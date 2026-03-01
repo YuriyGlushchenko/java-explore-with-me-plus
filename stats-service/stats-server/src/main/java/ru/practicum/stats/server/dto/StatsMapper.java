@@ -1,10 +1,12 @@
 package ru.practicum.stats.server.dto;
 
+import ru.practicum.stat.dto.EndpointHitDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
 
 public class StatsMapper {
 
-    public static EndpointHit toEntity(HitDto hitDto) {
+    public static EndpointHit toEntity(EndpointHitDto hitDto) {
         return EndpointHit.builder()
                 .app(hitDto.getApp())
                 .uri(hitDto.getUri())
@@ -13,8 +15,8 @@ public class StatsMapper {
                 .build();
     }
 
-    public static HitDto toHitDto(EndpointHit hit) {
-        return HitDto.builder()
+    public static EndpointHitDto toHitDto(EndpointHit hit) {
+        return EndpointHitDto.builder()
                 .app(hit.getApp())
                 .uri(hit.getUri())
                 .ip(hit.getIp())

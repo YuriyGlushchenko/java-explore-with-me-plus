@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.stats.server.dto.HitDto;
-import ru.practicum.stats.server.dto.ViewStatsDto;
+import ru.practicum.stat.dto.EndpointHitDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 import ru.practicum.stats.server.exceptions.ValidationException;
 import ru.practicum.stats.server.service.StatsService;
 
@@ -23,7 +23,7 @@ public class StatsController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public void saveHit(@Valid @RequestBody HitDto hitDto) {
+    public void saveHit(@Valid @RequestBody EndpointHitDto hitDto) {
         log.info("POST /hit with body: {}", hitDto);
         statsService.saveHit(hitDto);
     }

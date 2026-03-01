@@ -1,15 +1,17 @@
 package ru.practicum.stat.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ParamDto {
-    LocalDateTime start;
-    LocalDateTime end;
-    String[] uris;
-    Boolean unique;
+    private LocalDateTime start;
+    private LocalDateTime end;
+    private String[] uris;
+    private Boolean unique;
 }

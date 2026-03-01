@@ -6,7 +6,7 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import ru.practicum.stats.server.dto.ViewStatsDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.QEndpointHit;
 
 import java.time.LocalDateTime;

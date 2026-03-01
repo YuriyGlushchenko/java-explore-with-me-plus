@@ -9,9 +9,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.stat.dto.ParamDto;
-import ru.practicum.stat.dto.ParamHitDto;
-import ru.practicum.stat.dto.StatDto;
+import ru.practicum.stat.dto.EndpointHitDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 
+import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.springframework.http.HttpMethod.GET;
@@ -20,6 +22,7 @@ import static org.springframework.http.HttpMethod.POST;
 @Component
 @Slf4j
 public class StatsClient {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     final RestTemplate template;
     final String statUrl;
 
@@ -28,9 +31,9 @@ public class StatsClient {
         this.statUrl = statUrl;
     }
 
-    public void hit(ParamHitDto paramHitDto) {
+    public void hit(EndpointHitDto endpointHit) {
         try {
-            HttpEntity<ParamHitDto> requestEntity = new HttpEntity<>(paramHitDto);
+            HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(endpointHit);
             template.exchange(statUrl + "/hit", POST, requestEntity, Object.class);
         } catch (RuntimeException e) {
             log.warn("Не удалось сохранить хит: {}", e.getMessage());
@@ -38,28 +41,29 @@ public class StatsClient {
     }
 
 
-    public List<StatDto> get(ParamDto paramDto) {
-        String url = UriComponentsBuilder
+    public List<ViewStatsDto> get(ParamDto paramDto) {
+        URI uri = UriComponentsBuilder
                 .fromUriString(statUrl)
                 .path("/stats")
-                .queryParam("start", paramDto.getStart())
-                .queryParam("end", paramDto.getEnd())
+                .queryParam("start", paramDto.getStart().format(FORMATTER))
+                .queryParam("end", paramDto.getEnd().format(FORMATTER))
                 .queryParam("uris", (Object) paramDto.getUris())
                 .queryParam("unique", paramDto.getUnique())
+                .build()
                 .encode()
-                .toUriString();
+                .toUri();
         try {
-            ResponseEntity<List<StatDto>> response = template.exchange(
-                    url,
+            ResponseEntity<List<ViewStatsDto>> response = template.exchange(
+                    uri,
                     GET,
                     null,
-                    new ParameterizedTypeReference<List<StatDto>>() {
+                    new ParameterizedTypeReference<List<ViewStatsDto>>() {
                     }
             );
             return response.getBody();
         } catch (RuntimeException e) {
             log.warn("Ошибка при получении статистики: {}.", e.getMessage());
-            return List.of(StatDto.builder().hits(-1).build());
+            return List.of(ViewStatsDto.builder().hits(-1L).build());
         }
     }
 }

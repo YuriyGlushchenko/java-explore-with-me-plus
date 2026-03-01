@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.practicum.stats.server.dto.HitDto;
-import ru.practicum.stats.server.dto.ViewStatsDto;
+import ru.practicum.stat.dto.EndpointHitDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
 import ru.practicum.stats.server.repository.StatsRepository;
 
@@ -27,7 +27,7 @@ class StatsServiceImplTest {
     @InjectMocks
     private StatsServiceImpl statsService;
 
-    private HitDto hitDto;
+    private EndpointHitDto hitDto;
     private EndpointHit endpointHit;
     private LocalDateTime start;
     private LocalDateTime end;
@@ -38,7 +38,7 @@ class StatsServiceImplTest {
         start = LocalDateTime.of(2026, 1, 1, 0, 0);
         end = LocalDateTime.of(2026, 12, 31, 23, 59);
 
-        hitDto = HitDto.builder()
+        hitDto = EndpointHitDto.builder()
                 .app("ewm-main-service")
                 .uri("/events/1")
                 .ip("192.168.1.1")

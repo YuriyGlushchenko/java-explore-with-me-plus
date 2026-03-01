@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.stats.server.dto.HitDto;
-import ru.practicum.stats.server.dto.ViewStatsDto;
+import ru.practicum.stat.dto.EndpointHitDto;
+import ru.practicum.stat.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,14 +28,14 @@ class StatsIntegrationTest {
 
         LocalDateTime now = LocalDateTime.now();
 
-        HitDto hit1 = HitDto.builder()
+        EndpointHitDto hit1 = EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/1")
                 .ip("192.168.0.1")
                 .timestamp(now.minusHours(1))
                 .build();
 
-        HitDto hit2 = HitDto.builder()
+        EndpointHitDto hit2 = EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/1")
                 .ip("192.168.0.2")
@@ -62,14 +62,14 @@ class StatsIntegrationTest {
 
         LocalDateTime now = LocalDateTime.now();
 
-        HitDto hit1 = HitDto.builder()
+        EndpointHitDto hit1 = EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/2")
                 .ip("10.0.0.1")
                 .timestamp(now.minusHours(1))
                 .build();
 
-        HitDto hit2 = HitDto.builder()
+        EndpointHitDto hit2 = EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/2")
                 .ip("10.0.0.1") // тот же IP
@@ -96,14 +96,14 @@ class StatsIntegrationTest {
 
         LocalDateTime now = LocalDateTime.now();
 
-        statsService.saveHit(HitDto.builder()
+        statsService.saveHit(EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/1")
                 .ip("1.1.1.1")
                 .timestamp(now)
                 .build());
 
-        statsService.saveHit(HitDto.builder()
+        statsService.saveHit(EndpointHitDto.builder()
                 .app("ewm-service")
                 .uri("/events/2")
                 .ip("2.2.2.2")
