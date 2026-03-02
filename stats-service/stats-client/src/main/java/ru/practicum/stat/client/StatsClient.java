@@ -6,6 +6,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.stat.dto.ParamDto;
@@ -35,7 +36,7 @@ public class StatsClient {
         try {
             HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(endpointHit);
             template.exchange(statUrl + "/hit", POST, requestEntity, Object.class);
-        } catch (RuntimeException e) {
+        } catch (RestClientException e) {
             log.warn("Не удалось сохранить хит: {}", e.getMessage());
         }
     }
@@ -61,7 +62,7 @@ public class StatsClient {
                     }
             );
             return response.getBody();
-        } catch (RuntimeException e) {
+        } catch (RestClientException e) {
             log.warn("Ошибка при получении статистики: {}.", e.getMessage());
             return List.of(ViewStatsDto.builder().hits(-1L).build());
         }

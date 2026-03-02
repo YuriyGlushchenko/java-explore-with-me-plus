@@ -36,6 +36,11 @@ public class StatsController {
             @RequestParam(defaultValue = "false") boolean unique) {
 
         log.info("GET /stats with start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Параметры start и end не могут быть null");
+        }
+
         if (end.isBefore(start)) {
             throw new ValidationException("start", start, "stаrt should be BEFORE end");
         }
