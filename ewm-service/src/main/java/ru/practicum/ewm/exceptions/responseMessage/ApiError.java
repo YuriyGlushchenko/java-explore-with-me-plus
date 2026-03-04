@@ -1,4 +1,4 @@
-package ru.practicum.ewm.exceptions;
+package ru.practicum.ewm.exceptions.responseMessage;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

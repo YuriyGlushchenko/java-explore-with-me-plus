@@ -34,7 +34,6 @@ public class StatsRepositoryCustomImpl implements StatsRepositoryCustom {
             predicate.and(hit.uri.in(uris));
         }
 
-        // 👇 динамический count
         NumberExpression<Long> hitsExpression = unique
                 ? hit.ip.countDistinct()
                 : hit.id.count();
