@@ -1,7 +1,5 @@
 package ru.practicum.ewm.user.dto;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.user.model.User;
 

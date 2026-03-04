@@ -49,7 +49,7 @@ public class AdminUserController {
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeUser(@PathVariable long userId){
+    public void removeUser(@PathVariable long userId) {
         log.info("Request to delete user with id={}", userId);
 
         userService.deleteUser(userId);
