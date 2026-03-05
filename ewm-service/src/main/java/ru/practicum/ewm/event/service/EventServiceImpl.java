@@ -3,10 +3,13 @@ package ru.practicum.ewm.event.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.UserEventParam;
 import ru.practicum.ewm.event.model.EventSort;
 import ru.practicum.ewm.event.repository.EventRepository;
+import ru.practicum.ewm.event.repository.projections.EventWithRequests;
+import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
 import ru.practicum.stat.client.StatsClient;
 import ru.practicum.stat.dto.EndpointHitDto;
 import ru.practicum.stat.dto.ParamDto;
@@ -55,6 +58,26 @@ public class EventServiceImpl implements EventService {
         return events;
     }
 
+    public EventFullDto findEventById(String uri, String ip, Long id){
+        EventWithRequests eventWithRequests = eventRepository.findEventWithConfirmedRequests(id)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private void enrichEventsWithViews(List<EventShortDto> events) {
         String[] uris = events.stream()
                 .map(e -> "/events/" + e.getId())
@@ -67,7 +90,6 @@ public class EventServiceImpl implements EventService {
                 .unique(false)
                 .build();
 
-        try {
             List<ViewStatsDto> stats = statsClient.get(statRequestParam);
 
             if (stats.size() == 1 && stats.getFirst().getHits() == -1) {
@@ -86,9 +108,6 @@ public class EventServiceImpl implements EventService {
                     event.setViews(hits.getOrDefault(event.getId(), 0L))
             );
 
-        } catch (Exception e) {
-            log.error("Failed to get stats from stats-service", e);
-        }
     }
 
     private Long extractEventIdFromUri(ViewStatsDto stat) {

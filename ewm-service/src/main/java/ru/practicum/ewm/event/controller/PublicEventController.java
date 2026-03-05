@@ -7,10 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.UserEventParam;
 import ru.practicum.ewm.event.model.EventSort;
@@ -60,6 +58,13 @@ public class PublicEventController {
                 .build();
 
         return eventService.getEvents(param);
+    }
+
+    @GetMapping("/{id}")
+    public EventFullDto getEvent(@PathVariable long id, HttpServletRequest request){
+        log.debug("Request to get event: uri={}, ip={}, id={}", request.getRequestURI(), request.getRemoteAddr(), id);
+
+        return  eventService.findEventById( request.getRequestURI(), request.getRemoteAddr(), id);
     }
 
 
