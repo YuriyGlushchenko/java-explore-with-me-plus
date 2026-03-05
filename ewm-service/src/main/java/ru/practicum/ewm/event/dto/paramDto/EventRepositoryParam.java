@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.dto;
+package ru.practicum.ewm.event.dto.paramDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEventParam {
+public class EventRepositoryParam {
     private String text;
     private List<Long> categories;
     private Boolean paid;
@@ -25,6 +25,27 @@ public class UserEventParam {
     private Integer size;
     private String uri;
     private String ip;
+    private Long initiator;
+
+    public static EventRepositoryParam fromUserEventParam(UserEventParam userParam) {
+        return EventRepositoryParam.builder()
+                .text(userParam.getText())
+                .categories(userParam.getCategories())
+                .paid(userParam.getPaid())
+                .rangeStart(userParam.getRangeStart())
+                .rangeEnd(userParam.getRangeEnd())
+                .onlyAvailable(userParam.getOnlyAvailable())
+                .sort(userParam.getSort())
+                .from(userParam.getFrom())
+                .size(userParam.getSize())
+                .uri(userParam.getUri())
+                .ip(userParam.getIp())
+                .build();
+    }
+
+    public boolean hasInitiatorParam() {
+        return initiator != null;
+    }
 
     public boolean hasPaidParam() {
         return paid != null;

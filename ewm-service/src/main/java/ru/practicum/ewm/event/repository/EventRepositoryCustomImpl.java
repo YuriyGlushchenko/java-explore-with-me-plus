@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.categories.dto.CategoryDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.UserEventParam;
+import ru.practicum.ewm.event.dto.paramDto.EventRepositoryParam;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.request.model.QParticipationRequest;
@@ -26,7 +26,8 @@ import java.util.Optional;
 public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
-    public List<EventShortDto> findEvents(UserEventParam param) {
+    @Override
+    public List<EventShortDto> findEvents(EventRepositoryParam param) {
 
         QEvent event = QEvent.event;
         QParticipationRequest request = QParticipationRequest.participationRequest;
@@ -47,6 +48,10 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
 
         if (param.hasPaidParam()) {
             predicate.and(event.paid.eq(param.getPaid()));
+        }
+
+        if (param.hasInitiatorParam()) {
+            predicate.and(event.initiator.id.eq(param.getInitiator()));
         }
 
         if (param.hasDateRange()) {
@@ -111,9 +116,9 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                                         event.category.name
                                 ),
                                 request.count().as("confirmedRequests"),
-                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.createdOn).as("createdOn"),
+                                event.createdOn,
                                 event.description,
-                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.eventDate).as("eventDate"),
+                                event.eventDate,
                                 Projections.constructor(UserShortDto.class, //  Инициатор: создаём UserShortDto через проекцию
                                         event.initiator.id,
                                         event.initiator.name
@@ -121,14 +126,13 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                                 event.location, // в Event это @Embedded поле Location, а в таблице две колонки lat и lon
                                 event.paid,
                                 event.participantLimit,
-                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.publishedOn).as("publishedOn"),
+                                event.publishedOn,
                                 event.requestModeration,
                                 event.state,
                                 event.title,
                                 Expressions.asNumber(0L).as("views") // пока 0, потом подгружаем в сервисе
                         ))
                         .from(event)
-                        // подключаем таблицу запросов с подтвержденными запросами для поля confirmedRequests
                         .leftJoin(request).on(request.event.eq(event).and(request.status.eq(RequestStatus.CONFIRMED)))
                         .where(event.id.eq(id))
                         .groupBy(event.id)

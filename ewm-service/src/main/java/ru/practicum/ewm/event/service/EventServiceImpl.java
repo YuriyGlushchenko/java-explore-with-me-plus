@@ -3,13 +3,22 @@ package ru.practicum.ewm.event.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.UserEventParam;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.categories.Category;
+import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.paramDto.EventRepositoryParam;
+import ru.practicum.ewm.event.dto.paramDto.UserEventParam;
+import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventSort;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.repository.EventRepository;
+import ru.practicum.ewm.exceptions.exceptions.ConditionsNotMetException;
 import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
+import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.user.repository.UserRepository;
 import ru.practicum.stat.client.StatsClient;
 import ru.practicum.stat.dto.EndpointHitDto;
 import ru.practicum.stat.dto.ParamDto;
@@ -28,13 +37,58 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
     private final StatsClient statsClient;
+    private final EventMapper eventMapper;
+
 
     // константа - начало отчета времени сбора статистики, можно вынести в properties, если нужно будет
     private static final LocalDateTime STATS_START_DATE = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
+    @Transactional
     @Override
-    public List<EventShortDto> getEvents(UserEventParam param) {
+    public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
+        LocalDateTime minEventDate = LocalDateTime.now().plusHours(2);
+        if (newEventDto.getEventDate().isBefore(minEventDate)) {
+            throw new ConditionsNotMetException("Unable to update event at last 2 hours before event date");
+        }
+
+        // или не надо проверять, раз по условию он аутентифицирован и авторизован, значит точно есть
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + userId + " was not found"));
+
+        // Todo загружаем категорию из репозитория категорий, пока заглушка
+        Category cat = new Category(-1L, "222222");
+
+        Event event = eventMapper.toEvent(newEventDto, cat, user);
+
+        event = eventRepository.save(event);
+
+        return eventMapper.toEventFullDto(event, 0L, 0L);
+    }
+
+    @Override
+    public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
+        EventRepositoryParam param = EventRepositoryParam.builder()
+                .initiator(userId)
+                .from(from)
+                .size(size)
+                .build();
+
+        List<EventShortDto> events = eventRepository.findEvents(param);
+        if (events.isEmpty()) {
+            return events;
+        }
+
+        enrichEventsWithViews(events);
+
+        return events;
+    }
+
+    @Override
+    public List<EventShortDto> getEvents(UserEventParam userEventParam) {
+        EventRepositoryParam param = EventRepositoryParam.fromUserEventParam(userEventParam);
+
         List<EventShortDto> events = eventRepository.findEvents(param);
 
         if (events.isEmpty()) {
@@ -52,10 +106,68 @@ public class EventServiceImpl implements EventService {
         return events;
     }
 
-    public EventFullDto findEventById(String uri, String ip, Long id) {
+    @Override
+    public EventFullDto findUserEventByEventId(Long userId, Long eventId) {
 
-        //  Через QDsl, избыточно возможно, но кастомный репозиторий уже есть, QDSL уже подключен, с ним можно всё одним
-        // запросом сделать и получить ответ сразу в EventFullDto, не надо мапить отдельно.
+        EventFullDto event = eventRepository.findEventFullDtoById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
+        }
+
+        enrichEventWithViews(event);
+
+        return event;
+    }
+
+    @Override
+    @Transactional
+    public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest body) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
+        }
+
+        if (event.getState().equals(EventState.PUBLISHED)) {
+            throw new ConditionsNotMetException("Only events with CANCELED or PENDING state can be updated");
+        }
+
+        // в спецификации не сказано четко, какую дату проверять, которая уже в событии или новую(если есть), проверим обе
+        LocalDateTime minEventDateForUpdating = LocalDateTime.now().plusHours(2);
+        if (event.getEventDate().isBefore(minEventDateForUpdating)) {
+            throw new ConditionsNotMetException("Unable to update event at last 2 hours before event date");
+        }
+
+        if (body.getEventDate() != null) {
+            LocalDateTime newEventDate = body.getEventDate();
+            if (newEventDate.isBefore(minEventDateForUpdating)) {
+                throw new ConditionsNotMetException("Unable to update event at last 2 hours before event date");
+            }
+        }
+
+        Category cat = null;
+        if (body.getCategory() != null) {
+            // Todo загружаем категорию из репозитория категорий, пока заглушка
+            cat = new Category(-1L, "222222");
+        }
+        eventMapper.updateEventFromUserRequest(body, event, cat);
+
+        event = eventRepository.save(event);
+
+        String[] uris = {"/events/" + event.getId()};
+        Map<Long, Long> hits = fetchViews(uris);
+        Long views = hits.getOrDefault(event.getId(), 0L);
+
+        // Todo загружаем запросы из репозитория запросов, пока заглушка
+        Long confirmedRequests = -1L;
+
+        return eventMapper.toEventFullDto(event, confirmedRequests, views);
+    }
+
+    public EventFullDto findEventById(String uri, String ip, Long id) {
 
         EventFullDto event = eventRepository.findEventFullDtoById(id)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
@@ -69,6 +181,31 @@ public class EventServiceImpl implements EventService {
 
         return event;
     }
+
+    @Override
+    public List<ParticipationRequestDto> getParticipationRequests(Long userId, Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
+        }
+
+        // ToDo запрашиваем в репозитории ParticipationRequest заявки с таким eventId.В полученных ParticipationRequest
+        // можно проверить сразу что initiator.id == userId, тогда и отдельный  запрос не нужен?
+
+
+        return List.of();
+    }
+
+    @Override
+    public EventRequestStatusUpdateResult updateRequestStatuses(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
+
+        // ToDo реализация метода
+
+        return null;
+    }
+
 
     private void enrichEventsWithViews(List<EventShortDto> events) {
         String[] uris = events.stream()

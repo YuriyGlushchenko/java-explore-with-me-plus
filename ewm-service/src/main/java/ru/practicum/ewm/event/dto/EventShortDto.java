@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.categories.dto.CategoryDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
+
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -24,7 +27,8 @@ public class EventShortDto {
 
     private Long confirmedRequests;  // из запросов на участие
 
-    private String eventDate;  // "yyyy-MM-dd HH:mm:ss"
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;
 
     private UserShortDto initiator;
 

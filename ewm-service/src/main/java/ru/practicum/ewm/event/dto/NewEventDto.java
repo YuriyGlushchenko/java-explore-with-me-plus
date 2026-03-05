@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.event.model.Location;
+
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -26,7 +29,8 @@ public class NewEventDto {
     private String description;
 
     @NotBlank
-    private String eventDate;  // "yyyy-MM-dd HH:mm:ss"
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;  // "yyyy-MM-dd HH:mm:ss"
 
     @NotNull
     private Location location;
