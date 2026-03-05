@@ -23,6 +23,8 @@ public class UserEventParam {
     private EventSort sort;
     private Integer from;
     private Integer size;
+    private String uri;
+    private String ip;
 
     public boolean hasPaidParam() {
         return paid != null;

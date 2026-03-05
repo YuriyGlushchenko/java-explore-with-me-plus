@@ -84,7 +84,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
         }
 
         return query
-                .orderBy(event.eventDate.asc()) // сортируем сразу по дате, если нужна по views, то потом в сервисе переделаем
+                .orderBy(event.eventDate.asc()) // сортируем сразу по дате, если нужна по views, то потом в сервисе переделываем
                 .offset(param.getFrom())
                 .limit(param.getSize())
                 .fetch(); // вот только тут отправляется запрос

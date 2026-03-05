@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 public class PublicEventController {
     private final EventService eventService;
 
+
     @GetMapping
     public List<EventShortDto> getEvents(
             @RequestParam(required = false) String text,
@@ -36,11 +38,12 @@ public class PublicEventController {
             @RequestParam(defaultValue = "false") boolean onlyAvailable,
             @RequestParam(defaultValue = "EVENT_DATE") EventSort sort,
             @RequestParam(defaultValue = "0") @Min(0) int from,
-            @RequestParam(defaultValue = "10") @Positive int size
+            @RequestParam(defaultValue = "10") @Positive int size,
+            HttpServletRequest request
     ) {
-        log.debug("Request to get events: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, " +
-                        "sort={}, from={}, size={}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        log.debug("Request to get events: uri={}, ip={}, text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, " +
+                        "onlyAvailable={}, sort={}, from={}, size={}",
+                request.getRequestURI(), request.getRemoteAddr(), text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
         UserEventParam param = UserEventParam.builder()
                 .text(text)
@@ -52,7 +55,10 @@ public class PublicEventController {
                 .sort(sort)
                 .from(from)
                 .size(size)
+                .uri(request.getRequestURI())
+                .ip(request.getRemoteAddr())
                 .build();
+
         return eventService.getEvents(param);
     }
 
