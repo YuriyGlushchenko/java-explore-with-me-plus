@@ -61,10 +61,10 @@ public class PublicEventController {
     }
 
     @GetMapping("/{id}")
-    public EventFullDto getEvent(@PathVariable long id, HttpServletRequest request){
+    public EventFullDto getEvent(@PathVariable long id, HttpServletRequest request) {
         log.debug("Request to get event: uri={}, ip={}, id={}", request.getRequestURI(), request.getRemoteAddr(), id);
 
-        return  eventService.findEventById( request.getRequestURI(), request.getRemoteAddr(), id);
+        return eventService.findEventById(request.getRequestURI(), request.getRemoteAddr(), id);
     }
 
 

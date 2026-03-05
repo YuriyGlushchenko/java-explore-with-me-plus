@@ -7,15 +7,19 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import ru.practicum.ewm.categories.dto.CategoryDto;
+import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.UserEventParam;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.request.model.QParticipationRequest;
 import ru.practicum.ewm.request.model.RequestStatus;
+import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -89,5 +93,46 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                 .limit(param.getSize())
                 .fetch(); // вот только тут отправляется запрос
 
+    }
+
+
+    @Override
+    public Optional<EventFullDto> findEventFullDtoById(Long id) {
+        QEvent event = QEvent.event;
+        QParticipationRequest request = QParticipationRequest.participationRequest;
+
+        return Optional.ofNullable(
+                queryFactory
+                        .select(Projections.constructor(EventFullDto.class,
+                                event.id,
+                                event.annotation,
+                                Projections.constructor(CategoryDto.class, // Категория: создаём CategoryDto через проекцию
+                                        event.category.id,
+                                        event.category.name
+                                ),
+                                request.count().as("confirmedRequests"),
+                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.createdOn).as("createdOn"),
+                                event.description,
+                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.eventDate).as("eventDate"),
+                                Projections.constructor(UserShortDto.class, //  Инициатор: создаём UserShortDto через проекцию
+                                        event.initiator.id,
+                                        event.initiator.name
+                                ),
+                                event.location, // в Event это @Embedded поле Location, а в таблице две колонки lat и lon
+                                event.paid,
+                                event.participantLimit,
+                                Expressions.stringTemplate("TO_CHAR({0}, 'yyyy-MM-dd HH:mm:ss')", event.publishedOn).as("publishedOn"),
+                                event.requestModeration,
+                                event.state,
+                                event.title,
+                                Expressions.asNumber(0L).as("views") // пока 0, потом подгружаем в сервисе
+                        ))
+                        .from(event)
+                        // подключаем таблицу запросов с подтвержденными запросами для поля confirmedRequests
+                        .leftJoin(request).on(request.event.eq(event).and(request.status.eq(RequestStatus.CONFIRMED)))
+                        .where(event.id.eq(id))
+                        .groupBy(event.id)
+                        .fetchOne()
+        );
     }
 }

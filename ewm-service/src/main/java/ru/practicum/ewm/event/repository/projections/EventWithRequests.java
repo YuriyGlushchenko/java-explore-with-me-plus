@@ -4,5 +4,6 @@ import ru.practicum.ewm.event.model.Event;
 
 public interface EventWithRequests {
     Event getEvent();
+
     Long getConfirmedRequests();
 }
