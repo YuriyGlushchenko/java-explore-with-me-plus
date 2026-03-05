@@ -12,4 +12,6 @@ public interface EventRepositoryCustom {
     List<EventShortDto> findEvents(EventRepositoryParam param);
 
     Optional<EventFullDto> findEventFullDtoById(Long id);
+
+    List<EventFullDto> findFullDtoEvents(EventRepositoryParam param);
 }

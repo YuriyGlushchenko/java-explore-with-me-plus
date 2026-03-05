@@ -70,7 +70,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
         EventRepositoryParam param = EventRepositoryParam.builder()
-                .initiator(userId)
+                .users(List.of(userId))
                 .from(from)
                 .size(size)
                 .build();
@@ -101,7 +101,7 @@ public class EventServiceImpl implements EventService {
             events.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
 
-        sendHit(param.getUri(), param.getIp(), LocalDateTime.now());
+        sendHit(userEventParam.getUri(), userEventParam.getIp(), LocalDateTime.now());
 
         return events;
     }

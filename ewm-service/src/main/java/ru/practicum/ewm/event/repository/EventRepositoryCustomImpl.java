@@ -25,44 +25,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private final JPAQueryFactory queryFactory;
+    private final QEvent event = QEvent.event;
+    private final QParticipationRequest request = QParticipationRequest.participationRequest;
 
     @Override
     public List<EventShortDto> findEvents(EventRepositoryParam param) {
 
-        QEvent event = QEvent.event;
-        QParticipationRequest request = QParticipationRequest.participationRequest;
-
-        BooleanBuilder predicate = new BooleanBuilder();
-
-        predicate.and(event.state.eq(EventState.PUBLISHED));
-
-        if (param.hasTextSearchRequest()) {
-            predicate.and(
-                    event.annotation.containsIgnoreCase(param.getText())
-                            .or(event.description.containsIgnoreCase(param.getText())));
-        }
-
-        if (param.hasCategories()) {
-            predicate.and(event.category.id.in(param.getCategories()));
-        }
-
-        if (param.hasPaidParam()) {
-            predicate.and(event.paid.eq(param.getPaid()));
-        }
-
-        if (param.hasInitiatorParam()) {
-            predicate.and(event.initiator.id.eq(param.getInitiator()));
-        }
-
-        if (param.hasDateRange()) {
-            predicate.and(event.eventDate.between(param.getRangeStart(), param.getRangeEnd()));
-        } else if (param.hasRangeStart()) { // прямо не указано как обрабатывать, когда одна граница
-            predicate.and(event.eventDate.after(param.getRangeStart()));
-        } else if (param.hasRangeEnd()) {
-            predicate.and(event.eventDate.before(param.getRangeEnd()));
-        } else {
-            predicate.and(event.eventDate.after(LocalDateTime.now()));
-        }
+        BooleanBuilder predicate = createPredicate(param);
 
         // начинаем составлять запрос (но не отправляем!)
         var query = queryFactory  // var - компилятор сам определяет тип (JPAQuery<EventShortDto> в данном случае)
@@ -103,8 +72,6 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
 
     @Override
     public Optional<EventFullDto> findEventFullDtoById(Long id) {
-        QEvent event = QEvent.event;
-        QParticipationRequest request = QParticipationRequest.participationRequest;
 
         return Optional.ofNullable(
                 queryFactory
@@ -138,5 +105,96 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                         .groupBy(event.id)
                         .fetchOne()
         );
+    }
+
+    @Override
+    public List<EventFullDto> findFullDtoEvents(EventRepositoryParam param) {
+
+        BooleanBuilder predicate = createPredicate(param);
+
+        var query = queryFactory
+                .select(Projections.constructor(EventFullDto.class,
+                        event.id,
+                        event.annotation,
+                        Projections.constructor(CategoryDto.class,
+                                event.category.id,
+                                event.category.name
+                        ),
+                        request.count().as("confirmedRequests"),
+                        event.createdOn,
+                        event.description,
+                        event.eventDate,
+                        Projections.constructor(UserShortDto.class,
+                                event.initiator.id,
+                                event.initiator.name
+                        ),
+                        event.location,
+                        event.paid,
+                        event.participantLimit,
+                        event.publishedOn,
+                        event.requestModeration,
+                        event.state,
+                        event.title,
+                        Expressions.asNumber(0L).as("views")))
+                .from(event)
+                .leftJoin(request).on(
+                        request.event.eq(event)
+                                .and(request.status.eq(RequestStatus.CONFIRMED))
+                )
+                .where(predicate)
+                .groupBy(event.id);
+
+        if (param.isOnlyAvailable()) {
+            query.having(
+                    event.participantLimit.eq(0)
+                            .or(request.count().lt(event.participantLimit))
+            );
+        }
+
+        return query
+                .orderBy(event.eventDate.asc())
+                .offset(param.getFrom())
+                .limit(param.getSize())
+                .fetch();
+    }
+
+    private BooleanBuilder createPredicate(EventRepositoryParam param) {
+        BooleanBuilder predicate = new BooleanBuilder();
+
+        predicate.and(event.state.eq(EventState.PUBLISHED));
+
+        if (param.hasTextSearchRequest()) {
+            predicate.and(
+                    event.annotation.containsIgnoreCase(param.getText())
+                            .or(event.description.containsIgnoreCase(param.getText())));
+        }
+
+        if (param.hasCategories()) {
+            predicate.and(event.category.id.in(param.getCategories()));
+        }
+
+        if (param.hasPaidParam()) {
+            predicate.and(event.paid.eq(param.getPaid()));
+        }
+
+        if (param.hasStates()) {
+            predicate.and(event.state.in(param.getStates()));
+        }
+
+        if (param.hasUsers()) {
+            predicate.and(event.initiator.id.in(param.getUsers()));
+        }
+
+        if (param.hasDateRange()) {
+            predicate.and(event.eventDate.between(param.getRangeStart(), param.getRangeEnd()));
+        } else if (param.hasRangeStart()) { // прямо не указано как обрабатывать, когда одна граница
+            predicate.and(event.eventDate.after(param.getRangeStart()));
+        } else if (param.hasRangeEnd()) {
+            predicate.and(event.eventDate.before(param.getRangeEnd()));
+        } else {
+            predicate.and(event.eventDate.after(LocalDateTime.now()));
+        }
+
+        return predicate;
     }
 }

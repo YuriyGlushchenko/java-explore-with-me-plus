@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.ewm.event.model.EventSort;
+import ru.practicum.ewm.event.model.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.List;
 public class EventRepositoryParam {
     private String text;
     private List<Long> categories;
+    private List<Long> users;
+    private List<EventState> states;
     private Boolean paid;
     private LocalDateTime rangeStart;
     private LocalDateTime rangeEnd;
@@ -23,9 +26,6 @@ public class EventRepositoryParam {
     private EventSort sort;
     private Integer from;
     private Integer size;
-    private String uri;
-    private String ip;
-    private Long initiator;
 
     public static EventRepositoryParam fromUserEventParam(UserEventParam userParam) {
         return EventRepositoryParam.builder()
@@ -38,13 +38,27 @@ public class EventRepositoryParam {
                 .sort(userParam.getSort())
                 .from(userParam.getFrom())
                 .size(userParam.getSize())
-                .uri(userParam.getUri())
-                .ip(userParam.getIp())
                 .build();
     }
 
-    public boolean hasInitiatorParam() {
-        return initiator != null;
+    public static EventRepositoryParam fromAdminEventParam(AdminEventParam adminParam) {
+        return EventRepositoryParam.builder()
+                .users(adminParam.getUsers())
+                .states(adminParam.getStates())
+                .categories(adminParam.getCategories())
+                .rangeStart(adminParam.getRangeStart())
+                .rangeEnd(adminParam.getRangeEnd())
+                .from(adminParam.getFrom())
+                .size(adminParam.getSize())
+                .build();
+    }
+
+    public boolean hasUsers() {
+        return users != null && !users.isEmpty();
+    }
+
+    public boolean hasStates() {
+        return states != null && !states.isEmpty();
     }
 
     public boolean hasPaidParam() {
