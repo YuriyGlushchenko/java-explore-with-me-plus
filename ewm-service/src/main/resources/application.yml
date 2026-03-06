@@ -21,8 +21,7 @@ spring:
     init:
       mode: always
 
-stats:
-  server:
+stats-server:
     url: http://localhost:9090
 
 logging:
