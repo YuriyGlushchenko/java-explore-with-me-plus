@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -11,11 +12,13 @@ import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventFullDto {
+public class EventFullDto implements Viewable {
     private Long id;
 
     @NotBlank
@@ -24,15 +27,17 @@ public class EventFullDto {
 
     private CategoryDto category;
 
-    private Long confirmedRequests;  // из запросов на участие
+    private Long confirmedRequests;  // из таблицы запросов на участие
 
-    private String createdOn;  // "yyyy-MM-dd HH:mm:ss"
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdOn;
 
     @NotBlank
     @Size(min = 20, max = 7000)
     private String description;
 
-    private String eventDate;  // "yyyy-MM-dd HH:mm:ss"
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;
 
     private UserShortDto initiator;
 
@@ -42,7 +47,8 @@ public class EventFullDto {
 
     private Integer participantLimit;  // по умолчанию 0
 
-    private String publishedOn;  // "yyyy-MM-dd HH:mm:ss"
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime publishedOn;
 
     private Boolean requestModeration;  // по умолчанию true
 
