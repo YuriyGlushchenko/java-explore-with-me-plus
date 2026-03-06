@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.ewm.exceptions.exceptions.ConditionsNotMetException;
 import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
 import ru.practicum.ewm.exceptions.exceptions.ValidationException;
 import ru.practicum.ewm.exceptions.responseMessage.ApiError;
@@ -138,6 +139,20 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
     }
+
+    @ExceptionHandler(ConditionsNotMetException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleConditionsNotMetException(ConditionsNotMetException ex) {
+        log.warn("Conditions not met: {}", ex.getMessage());
+        return ApiError.builder()
+                .errors(Collections.emptyList())
+                .message(ex.getMessage())
+                .reason("For the requested operation the conditions are not met.")
+                .status(HttpStatus.FORBIDDEN.name())
+                .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .build();
+    }
+
 
     // Обработка всех остальных исключений (500), как было в вебинаре
     @ExceptionHandler(Exception.class)

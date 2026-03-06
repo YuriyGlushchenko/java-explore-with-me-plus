@@ -5,10 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
-import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.dto.NewUserRequest;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserMapper;
+import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> findUsers(List<Long> ids, int from, int size) {
-        List<UserDto> users = userRepository.findUsers(ids,from, size);
+        List<UserDto> users = userRepository.findUsers(ids, from, size);
         log.debug("Found {} users", users.size());
 
         return users;
@@ -58,7 +58,6 @@ public class UserServiceImpl implements UserService {
 //        List<UserDto> dto = userMapper.toDto(page.getContent(), views);
 //        return dto;
 //    }
-
 
 
 }
