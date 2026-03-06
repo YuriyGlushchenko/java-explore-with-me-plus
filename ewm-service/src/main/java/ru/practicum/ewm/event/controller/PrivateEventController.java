@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -28,6 +29,7 @@ public class PrivateEventController {
     private final EventService eventService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto addEvent(@PathVariable long userId,
                                  @RequestBody @Valid NewEventDto newEventDto) {
         log.debug("Request to add new event:  userId={}", userId);

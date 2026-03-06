@@ -38,10 +38,10 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                 .select(Projections.constructor(EventShortDto.class,
                         event.id,
                         event.annotation,
-                        event.category,
+                        Projections.constructor(CategoryDto.class, event.category.id, event.category.name), // проекция в DTO
                         request.count().as("confirmedRequests"),
                         event.eventDate,
-                        event.initiator,
+                        Projections.constructor(UserShortDto.class, event.initiator.id, event.initiator.name), // проекция в DTO
                         event.paid,
                         event.title,
                         Expressions.asNumber(0L).as("views")))
@@ -86,10 +86,8 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                                 event.createdOn,
                                 event.description,
                                 event.eventDate,
-                                Projections.constructor(UserShortDto.class, //  Инициатор: создаём UserShortDto через проекцию
-                                        event.initiator.id,
-                                        event.initiator.name
-                                ),
+                                //  Инициатор c типом User -> создаём UserShortDto через проекцию
+                                Projections.constructor(UserShortDto.class, event.initiator.id, event.initiator.name),
                                 event.location, // в Event это @Embedded поле Location, а в таблице две колонки lat и lon
                                 event.paid,
                                 event.participantLimit,

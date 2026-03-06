@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event.controller;
 
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +58,7 @@ public class AdminEventController {
     @PatchMapping("/{eventId}")
     public EventFullDto updateEvent(
             @PathVariable long eventId,
-            @RequestBody UpdateEventAdminRequest body) {
+            @RequestBody @Valid UpdateEventAdminRequest body) {
         log.debug("Admin request to update event:  eventId={}", eventId);
 
         return eventService.updateEvent(eventId, body);

@@ -3,7 +3,7 @@ package ru.practicum.ewm.categories.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
-import ru.practicum.ewm.categories.dto.Mapper;
+import ru.practicum.ewm.categories.dto.CategoryMapper;
 import ru.practicum.ewm.categories.dto.CategoryDto;
 import ru.practicum.ewm.categories.dto.NewCategoryDto;
 import ru.practicum.ewm.categories.model.Category;
@@ -19,8 +19,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto postCategory(NewCategoryDto newCategoryDto) {
-        Category category = Mapper.toCategory(newCategoryDto);
-        return Mapper.toCategoryDto(categoryRepository.postCategory(category));
+        Category category = CategoryMapper.toCategory(newCategoryDto);
+        return CategoryMapper.toCategoryDto(categoryRepository.postCategory(category));
     }
 
     @Override
@@ -36,14 +36,14 @@ public class CategoryServiceImpl implements CategoryService {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Категория с id = " + catId + " не найдена");
         }
-        Category category = Mapper.toCategory(newCategoryDto);
+        Category category = CategoryMapper.toCategory(newCategoryDto);
         Category updated = categoryRepository.patchCategory(catId, category);
-        return Mapper.toCategoryDto(updated);
+        return CategoryMapper.toCategoryDto(updated);
     }
 
     @Override
     public List<CategoryDto> getCategories(int from, int size) {
-        return categoryRepository.getCategories(from, size).stream().map(Mapper::toCategoryDto).toList();
+        return categoryRepository.getCategories(from, size).stream().map(CategoryMapper::toCategoryDto).toList();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Категория с id = " + catId + " не найдена");
         }
-        return Mapper.toCategoryDto(categoryRepository.getCategory(catId));
+        return CategoryMapper.toCategoryDto(categoryRepository.getCategory(catId));
     }
 
 

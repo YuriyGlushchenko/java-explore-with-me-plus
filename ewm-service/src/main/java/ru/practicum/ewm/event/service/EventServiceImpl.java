@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.categories.Category;
+
+import ru.practicum.ewm.categories.model.Category;
+import ru.practicum.ewm.categories.repository.CategoryRepository;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.dto.paramDto.AdminUserEventParam;
 import ru.practicum.ewm.event.dto.paramDto.EventRepositoryParam;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final StatsClient statsClient;
     private final EventMapper eventMapper;
 
@@ -49,17 +52,19 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
+        // "дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента"
         LocalDateTime minEventDate = LocalDateTime.now().plusHours(2);
         if (newEventDto.getEventDate().isBefore(minEventDate)) {
             throw new ConditionsNotMetException("Unable to update event at last 2 hours before event date");
         }
 
-        // или не надо проверять, раз по условию он аутентифицирован и авторизован, значит точно есть
+        // или не надо проверять, раз по условию пользователь аутентифицирован и авторизован, значит точно есть?
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + userId + " was not found"));
 
         // Todo загружаем категорию из репозитория категорий, пока заглушка
-        Category cat = new Category(-1L, "222222");
+//        Category cat = new Category(-1L, "222222");
+        Category cat = categoryRepository.getCategory(newEventDto.getCategory());
 
         Event event = eventMapper.toEvent(newEventDto, cat, user);
 
@@ -184,7 +189,8 @@ public class EventServiceImpl implements EventService {
         Category cat = null;
         if (body.getCategory() != null) {
             // Todo загружаем категорию из репозитория категорий, пока заглушка
-            cat = new Category(-1L, "222222");
+//            cat = new Category(-1L, "222222");
+            cat = categoryRepository.getCategory(body.getCategory());
         }
         eventMapper.updateEventFromUserRequest(body, event, cat);
 
@@ -210,7 +216,8 @@ public class EventServiceImpl implements EventService {
         Category category = null;
         if (body.getCategory() != null) {
             // Todo загружаем категорию из репозитория категорий как будет готов, пока заглушка
-            category = new Category(-1L, "222222"); // временная заглушка
+//            category = new Category(-1L, "222222"); // временная заглушка
+            category = categoryRepository.getCategory(body.getCategory());
         }
 
         eventMapper.updateEventFromAdminRequest(body, event, category);
