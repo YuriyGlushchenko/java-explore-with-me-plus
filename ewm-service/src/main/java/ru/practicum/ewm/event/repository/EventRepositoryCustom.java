@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public interface EventRepositoryCustom {
 
-    List<EventShortDto> findEvents(EventRepositoryParam param);
+    List<EventShortDto> findEventsShortDto(EventRepositoryParam param);
 
-    Optional<EventFullDto> findEventFullDtoById(Long id);
+    Optional<EventFullDto> findEventByIdFullDto(Long id);
 
-    List<EventFullDto> findFullDtoEvents(EventRepositoryParam param);
+    List<EventFullDto> findEventsFullDto(EventRepositoryParam param);
 }

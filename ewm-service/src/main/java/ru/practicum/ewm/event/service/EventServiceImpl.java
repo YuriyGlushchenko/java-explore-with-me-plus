@@ -6,8 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.categories.Category;
 import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.paramDto.AdminUserEventParam;
 import ru.practicum.ewm.event.dto.paramDto.EventRepositoryParam;
-import ru.practicum.ewm.event.dto.paramDto.UserEventParam;
+import ru.practicum.ewm.event.dto.paramDto.PublicUserEventParam;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventSort;
 import ru.practicum.ewm.event.model.EventState;
@@ -75,7 +76,7 @@ public class EventServiceImpl implements EventService {
                 .size(size)
                 .build();
 
-        List<EventShortDto> events = eventRepository.findEvents(param);
+        List<EventShortDto> events = eventRepository.findEventsShortDto(param);
         if (events.isEmpty()) {
             return events;
         }
@@ -86,11 +87,10 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEvents(UserEventParam userEventParam) {
+    public List<EventShortDto> getEventsForPublicRequests(PublicUserEventParam userEventParam) {
         EventRepositoryParam param = EventRepositoryParam.fromUserEventParam(userEventParam);
 
-        List<EventShortDto> events = eventRepository.findEvents(param);
-
+        List<EventShortDto> events = eventRepository.findEventsShortDto(param);
         if (events.isEmpty()) {
             return events;
         }
@@ -107,9 +107,23 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<EventFullDto> getEventsForAdminRequests(AdminUserEventParam adminParam) {
+        EventRepositoryParam param = EventRepositoryParam.fromAdminEventParam(adminParam);
+
+        List<EventFullDto> events = eventRepository.findEventsFullDto(param);
+        if (events.isEmpty()) {
+            return events;
+        }
+
+        enrichEventsWithViews(events);
+
+        return events;
+    }
+
+    @Override
     public EventFullDto findUserEventByEventId(Long userId, Long eventId) {
 
-        EventFullDto event = eventRepository.findEventFullDtoById(eventId)
+        EventFullDto event = eventRepository.findEventByIdFullDto(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
         if (!event.getInitiator().getId().equals(userId)) {
@@ -146,6 +160,25 @@ public class EventServiceImpl implements EventService {
             if (newEventDate.isBefore(minEventDateForUpdating)) {
                 throw new ConditionsNotMetException("Unable to update event at last 2 hours before event date");
             }
+
+        }
+
+        if (body.getStateAction() != null) {
+            switch (body.getStateAction()) {
+                case SEND_TO_REVIEW:
+                    if (event.getState() == EventState.CANCELED) {
+                        event.setState(EventState.PENDING);
+                    }
+                    break;
+                case CANCEL_REVIEW:
+                    if (event.getState() != EventState.PENDING) {
+                        throw new ConditionsNotMetException("Only events in PENDING state can be cancelled");
+                    }
+                    event.setState(EventState.CANCELED);
+                    break;
+                default:
+                    throw new ConditionsNotMetException("Unknown state action: " + body.getStateAction());
+            }
         }
 
         Category cat = null;
@@ -167,9 +200,66 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toEventFullDto(event, confirmedRequests, views);
     }
 
+
+    @Override
+    @Transactional
+    public EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest body) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+
+        Category category = null;
+        if (body.getCategory() != null) {
+            // Todo загружаем категорию из репозитория категорий как будет готов, пока заглушка
+            category = new Category(-1L, "222222"); // временная заглушка
+        }
+
+        eventMapper.updateEventFromAdminRequest(body, event, category);
+
+        if (body.getStateAction() != null) {
+            switch (body.getStateAction()) {
+                case PUBLISH_EVENT:
+                    // "событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)"
+                    if (event.getState() != EventState.PENDING) {
+                        String msg = "Cannot publish the event because it's not in the right state: " + event.getState();
+                        throw new ConditionsNotMetException(msg);
+                    }
+                    // "дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)"
+                    // т.е. если собираемся опубликовать событие, то должен быть запас в час по времени
+                    LocalDateTime minPublishDate = LocalDateTime.now().plusHours(1);
+                    if (event.getEventDate().isBefore(minPublishDate)) {
+                        throw new ConditionsNotMetException("Event date must be at least 1 hour from now");
+                    }
+                    event.setState(EventState.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
+                    break;
+
+                case REJECT_EVENT:
+                    // "событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)"
+                    if (event.getState() == EventState.PUBLISHED) {
+                        throw new ConditionsNotMetException("Cannot reject published event");
+                    }
+                    event.setState(EventState.CANCELED);
+                    break;
+
+                default:
+                    throw new ConditionsNotMetException("Unknown state action: " + body.getStateAction());
+            }
+        }
+
+        event = eventRepository.save(event);
+
+        String[] uris = {"/events/" + event.getId()};
+        Map<Long, Long> hits = fetchViews(uris);
+        Long views = hits.getOrDefault(event.getId(), 0L);
+
+        Long confirmedRequests = -1L; // TODO заменить на реальный запрос, пока заглушка, потом допилим
+
+        return eventMapper.toEventFullDto(event, confirmedRequests, views);
+    }
+
     public EventFullDto findEventById(String uri, String ip, Long id) {
 
-        EventFullDto event = eventRepository.findEventFullDtoById(id)
+        EventFullDto event = eventRepository.findEventByIdFullDto(id)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
@@ -191,23 +281,22 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
         }
 
+        throw new RuntimeException("Метод не реализован");
         // ToDo запрашиваем в репозитории ParticipationRequest заявки с таким eventId.В полученных ParticipationRequest
         // можно проверить сразу что initiator.id == userId, тогда и отдельный  запрос не нужен?
 
-
-        return List.of();
     }
 
     @Override
     public EventRequestStatusUpdateResult updateRequestStatuses(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
 
-        // ToDo реализация метода
+        // ToDo реализация метода после реализации запросов
+        throw new RuntimeException("Метод не реализован");
 
-        return null;
     }
 
 
-    private void enrichEventsWithViews(List<EventShortDto> events) {
+    private <T extends Viewable> void enrichEventsWithViews(List<T> events) {
         String[] uris = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .toArray(String[]::new);

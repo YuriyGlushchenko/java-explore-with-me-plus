@@ -1,10 +1,8 @@
 package ru.practicum.ewm.event.service;
 
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.event.dto.paramDto.UserEventParam;
+import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.paramDto.AdminUserEventParam;
+import ru.practicum.ewm.event.dto.paramDto.PublicUserEventParam;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
@@ -13,7 +11,9 @@ import java.util.List;
 
 public interface EventService {
 
-    List<EventShortDto> getEvents(UserEventParam param);
+    List<EventShortDto> getEventsForPublicRequests(PublicUserEventParam param);
+
+    List<EventFullDto> getEventsForAdminRequests(AdminUserEventParam param);
 
     EventFullDto findEventById(String uri, String ip, Long id);
 
@@ -24,6 +24,8 @@ public interface EventService {
     EventFullDto findUserEventByEventId(Long userId, Long eventId);
 
     EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest body);
+
+    EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest body);
 
     List<ParticipationRequestDto> getParticipationRequests(Long userId, Long eventId);
 

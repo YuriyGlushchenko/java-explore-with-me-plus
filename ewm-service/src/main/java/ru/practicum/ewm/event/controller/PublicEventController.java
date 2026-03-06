@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.paramDto.UserEventParam;
+import ru.practicum.ewm.event.dto.paramDto.PublicUserEventParam;
 import ru.practicum.ewm.event.model.EventSort;
 import ru.practicum.ewm.event.service.EventService;
 
@@ -39,11 +39,11 @@ public class PublicEventController {
             @RequestParam(defaultValue = "10") @Positive int size,
             HttpServletRequest request
     ) {
-        log.debug("Request to get events: uri={}, ip={}, text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, " +
+        log.debug("Public request to get events: uri={}, ip={}, text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, " +
                         "onlyAvailable={}, sort={}, from={}, size={}",
                 request.getRequestURI(), request.getRemoteAddr(), text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
-        UserEventParam param = UserEventParam.builder()
+        PublicUserEventParam param = PublicUserEventParam.builder()
                 .text(text)
                 .categories(categories)
                 .paid(paid)
@@ -57,7 +57,7 @@ public class PublicEventController {
                 .ip(request.getRemoteAddr())
                 .build();
 
-        return eventService.getEvents(param);
+        return eventService.getEventsForPublicRequests(param);
     }
 
     @GetMapping("/{id}")

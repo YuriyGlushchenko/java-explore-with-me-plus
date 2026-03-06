@@ -29,7 +29,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private final QParticipationRequest request = QParticipationRequest.participationRequest;
 
     @Override
-    public List<EventShortDto> findEvents(EventRepositoryParam param) {
+    public List<EventShortDto> findEventsShortDto(EventRepositoryParam param) {
 
         BooleanBuilder predicate = createPredicate(param);
 
@@ -71,7 +71,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
 
 
     @Override
-    public Optional<EventFullDto> findEventFullDtoById(Long id) {
+    public Optional<EventFullDto> findEventByIdFullDto(Long id) {
 
         return Optional.ofNullable(
                 queryFactory
@@ -108,7 +108,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     }
 
     @Override
-    public List<EventFullDto> findFullDtoEvents(EventRepositoryParam param) {
+    public List<EventFullDto> findEventsFullDto(EventRepositoryParam param) {
 
         BooleanBuilder predicate = createPredicate(param);
 
@@ -161,7 +161,11 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private BooleanBuilder createPredicate(EventRepositoryParam param) {
         BooleanBuilder predicate = new BooleanBuilder();
 
-        predicate.and(event.state.eq(EventState.PUBLISHED));
+        if (param.isPublicRequest()) {  // для публичных запросов только PUBLISHED события
+            predicate.and(event.state.eq(EventState.PUBLISHED));
+        } else if (param.hasStates()) {  // для админских запросов добавляем states в предикат, если они переданы
+            predicate.and(event.state.in(param.getStates()));
+        }
 
         if (param.hasTextSearchRequest()) {
             predicate.and(
@@ -175,10 +179,6 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
 
         if (param.hasPaidParam()) {
             predicate.and(event.paid.eq(param.getPaid()));
-        }
-
-        if (param.hasStates()) {
-            predicate.and(event.state.in(param.getStates()));
         }
 
         if (param.hasUsers()) {

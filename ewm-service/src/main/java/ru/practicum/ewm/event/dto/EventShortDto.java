@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventShortDto {
+public class EventShortDto implements Viewable {
     private Long id;
 
     @NotBlank

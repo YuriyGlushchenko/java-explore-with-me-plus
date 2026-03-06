@@ -26,8 +26,9 @@ public class EventRepositoryParam {
     private EventSort sort;
     private Integer from;
     private Integer size;
+    private boolean publicRequest; // указывает на запрос с публичного эндпоинта, тогда нужны только PUBLISHED события
 
-    public static EventRepositoryParam fromUserEventParam(UserEventParam userParam) {
+    public static EventRepositoryParam fromUserEventParam(PublicUserEventParam userParam) {
         return EventRepositoryParam.builder()
                 .text(userParam.getText())
                 .categories(userParam.getCategories())
@@ -38,10 +39,11 @@ public class EventRepositoryParam {
                 .sort(userParam.getSort())
                 .from(userParam.getFrom())
                 .size(userParam.getSize())
+                .publicRequest(true)
                 .build();
     }
 
-    public static EventRepositoryParam fromAdminEventParam(AdminEventParam adminParam) {
+    public static EventRepositoryParam fromAdminEventParam(AdminUserEventParam adminParam) {
         return EventRepositoryParam.builder()
                 .users(adminParam.getUsers())
                 .states(adminParam.getStates())
@@ -51,6 +53,10 @@ public class EventRepositoryParam {
                 .from(adminParam.getFrom())
                 .size(adminParam.getSize())
                 .build();
+    }
+
+    public boolean isPublicRequest() {
+        return publicRequest;
     }
 
     public boolean hasUsers() {
