@@ -58,7 +58,7 @@ public class EventRepositoryParam {
                 .build();
     }
 
-    public boolean hasIds(){
+    public boolean hasIds() {
         return ids != null && !ids.isEmpty();
     }
 

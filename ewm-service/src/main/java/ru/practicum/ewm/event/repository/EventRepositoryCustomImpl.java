@@ -217,7 +217,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
             predicate.and(event.initiator.id.in(param.getUsers()));
         }
 
-        if(param.hasIds()){
+        if (param.hasIds()) {
             predicate.and(event.id.in(param.getIds()));
         }
 
