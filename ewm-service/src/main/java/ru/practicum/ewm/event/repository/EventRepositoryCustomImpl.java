@@ -217,6 +217,10 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
             predicate.and(event.initiator.id.in(param.getUsers()));
         }
 
+        if(param.hasIds()){
+            predicate.and(event.id.in(param.getIds()));
+        }
+
         if (param.hasDateRange()) {
             predicate.and(event.eventDate.between(param.getRangeStart(), param.getRangeEnd()));
         } else if (param.hasRangeStart()) { // прямо не указано как обрабатывать, когда одна граница

@@ -10,6 +10,8 @@ import ru.practicum.ewm.event.model.EventState;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+// класс для передачи параметров для отбора событий в репозиторий
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,6 +29,7 @@ public class EventRepositoryParam {
     private Integer from;
     private Integer size;
     private boolean publicRequest; // указывает на запрос с публичного эндпоинта, тогда нужны только PUBLISHED события
+    private List<Long> ids;
 
     public static EventRepositoryParam fromUserEventParam(PublicUserEventParam userParam) {
         return EventRepositoryParam.builder()
@@ -53,6 +56,10 @@ public class EventRepositoryParam {
                 .from(adminParam.getFrom())
                 .size(adminParam.getSize())
                 .build();
+    }
+
+    public boolean hasIds(){
+        return ids != null && !ids.isEmpty();
     }
 
     public boolean isPublicRequest() {
