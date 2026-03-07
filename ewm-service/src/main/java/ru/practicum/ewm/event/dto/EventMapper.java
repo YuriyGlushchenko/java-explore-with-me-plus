@@ -2,7 +2,6 @@ package ru.practicum.ewm.event.dto;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import ru.practicum.ewm.categories.dto.CategoryMapper;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.event.model.Event;

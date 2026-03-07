@@ -16,7 +16,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
     properties:
       hibernate:
@@ -29,7 +29,7 @@ spring:
 logging:
   level:
     ru.practicum.ewm: DEBUG
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: OFF
 
 stats-server:
   url: http://localhost:9090

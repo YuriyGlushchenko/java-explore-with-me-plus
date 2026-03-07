@@ -57,7 +57,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public Category getCategory(Long catId) {
-    String sql = "SELECT * FROM categories WHERE id = ?";
+        String sql = "SELECT * FROM categories WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new Category(
                 rs.getLong("id"),
                 rs.getString("name")
