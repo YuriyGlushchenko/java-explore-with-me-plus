@@ -51,7 +51,15 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                                 .and(request.status.eq(RequestStatus.CONFIRMED))
                 )
                 .where(predicate)
-                .groupBy(event.id);
+                .groupBy(
+                        event.id, // нужен только .groupBy(event.id), но для postgres обязательно все поля перечислять из select
+                        event.category.id,
+                        event.category.name,
+                        event.initiator.id,
+                        event.initiator.name,
+                        event.paid,
+                        event.title
+                );
 
         // добавляем фильтрацию в запрос, если требуются только доступные события
         if (param.isOnlyAvailable()) {
@@ -100,7 +108,20 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                         .from(event)
                         .leftJoin(request).on(request.event.eq(event).and(request.status.eq(RequestStatus.CONFIRMED)))
                         .where(event.id.eq(id))
-                        .groupBy(event.id)
+                        .groupBy(
+                                event.id, // нужен только .groupBy(event.id), но для postgres обязательно все поля перечислять из select
+                                event.category.id,
+                                event.category.name,
+                                event.initiator.id,
+                                event.initiator.name,
+                                event.location,
+                                event.paid,
+                                event.participantLimit,
+                                event.publishedOn,
+                                event.requestModeration,
+                                event.state,
+                                event.title
+                        )
                         .fetchOne()
         );
     }
@@ -140,7 +161,20 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                                 .and(request.status.eq(RequestStatus.CONFIRMED))
                 )
                 .where(predicate)
-                .groupBy(event.id);
+                .groupBy(
+                        event.id, // нужен только .groupBy(event.id), но для postgres обязательно все поля перечислять из select
+                        event.category.id,
+                        event.category.name,
+                        event.initiator.id,
+                        event.initiator.name,
+                        event.location,
+                        event.paid,
+                        event.participantLimit,
+                        event.publishedOn,
+                        event.requestModeration,
+                        event.state,
+                        event.title
+                );
 
         if (param.isOnlyAvailable()) {
             query.having(

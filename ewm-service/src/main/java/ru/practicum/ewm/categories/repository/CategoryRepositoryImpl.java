@@ -1,6 +1,7 @@
 package ru.practicum.ewm.categories.repository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -8,10 +9,10 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.categories.model.Category;
 
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CategoryRepositoryImpl implements CategoryRepository {
@@ -24,7 +25,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});  // заменил Statement.RETURN_GENERATED_KEYS, в postgres не работает иначе
             ps.setString(1, category.getName());
             return ps;
         }, keyHolder);
