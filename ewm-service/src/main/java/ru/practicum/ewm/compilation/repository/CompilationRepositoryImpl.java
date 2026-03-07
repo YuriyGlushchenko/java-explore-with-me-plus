@@ -6,6 +6,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.compilation.model.Compilation;
+import ru.practicum.ewm.event.model.Event;
 
 import java.sql.PreparedStatement;
 import java.util.*;
@@ -64,7 +65,7 @@ public class CompilationRepositoryImpl implements CompilationRepository {
     }
 
     @Override
-    public List<Compilation> getCompilations(Boolean pinned, int from, int size) {
+    public List<Compilation> getCompilations(   Boolean pinned, int from, int size) {
         String sql = "SELECT * FROM compilations ";
         List<Object> params = new ArrayList<>();
 
@@ -90,7 +91,9 @@ public class CompilationRepositoryImpl implements CompilationRepository {
                     Long.class,
                     comp.getId()
             );
-            comp.setEvents(eventIds);
+            comp.setEvents(eventIds.stream()
+                    .map(id -> Event.builder().id(id).build())
+                    .toList());
         }
 
         return compilations;
@@ -111,7 +114,9 @@ public class CompilationRepositoryImpl implements CompilationRepository {
         );
 
         List<Long> eventIds = jdbcTemplate.queryForList(sqlEvents, Long.class, compId);
-        comp.setEvents(eventIds);
+        comp.setEvents(eventIds.stream()
+                .map(id -> Event.builder().id(id).build())
+                .toList());
 
         return comp;
     }
@@ -123,11 +128,10 @@ public class CompilationRepositoryImpl implements CompilationRepository {
         return count > 0;
     }
 
-    private void saveEventsRelations(Long compId, List<Long> eventIds) {
+    private void saveEventsRelations(Long compId, List<Event> events) {
         String sql = "INSERT INTO compilation_events (compilation_id, event_id) VALUES (?, ?)";
-
-        for (Long eventId : eventIds) {
-            jdbcTemplate.update(sql, compId, eventId);
+        for (Event event : events) {
+            jdbcTemplate.update(sql, compId, event.getId());
         }
     }
 }

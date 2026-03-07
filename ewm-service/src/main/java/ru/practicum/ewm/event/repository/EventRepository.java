@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long>, EventRepositoryCustom {
 
-    List<Event> findAllByIds(Collection<Long> eventIds);
+    List<Event> findAllByIdIn(Collection<Long> eventIds);
 
 }

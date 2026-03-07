@@ -2,6 +2,7 @@ package ru.practicum.ewm.compilation.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import ru.practicum.ewm.event.model.Event;
 
 import java.util.List;
 
@@ -30,6 +31,6 @@ public class Compilation {
             joinColumns = @JoinColumn(name = "compilation_id"),
             inverseJoinColumns = @JoinColumn(name = "event_id")
     )
-    private List<Long> events;
+    private List<Event> events;
 
 }

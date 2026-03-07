@@ -350,12 +350,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getShortDtosByIds(Collection<Long> eventIds) {
-        if (eventIds == null || eventIds.isEmpty()) {
+    public List<EventShortDto> getShortDtosByIds(Collection<Long> eventId) {
+        if (eventId == null || eventId.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<Event> events = eventRepository.findAllByIds(eventIds);
+        List<Event> events = eventRepository.findAllByIdIn(eventId);
 
         List<EventShortDto> dtos = events.stream()
                 .map(event -> eventMapper.toEventShortDto(event, 0L, 0L))
