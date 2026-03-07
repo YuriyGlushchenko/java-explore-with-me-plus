@@ -65,7 +65,7 @@ public class CompilationRepositoryImpl implements CompilationRepository {
     }
 
     @Override
-    public List<Compilation> getCompilations(   Boolean pinned, int from, int size) {
+    public List<Compilation> getCompilations(Boolean pinned, int from, int size) {
         String sql = "SELECT * FROM compilations ";
         List<Object> params = new ArrayList<>();
 
