@@ -2,8 +2,8 @@ package ru.practicum.ewm.categories.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.categories.service.CategoryService;
 import ru.practicum.ewm.categories.dto.CategoryDto;
+import ru.practicum.ewm.categories.service.CategoryService;
 
 import java.util.List;
 

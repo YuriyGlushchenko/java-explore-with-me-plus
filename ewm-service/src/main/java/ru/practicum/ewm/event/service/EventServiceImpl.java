@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
 import ru.practicum.ewm.event.dto.*;
@@ -20,6 +19,10 @@ import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
+import ru.practicum.ewm.request.dto.ParticipationRequestMapper;
+import ru.practicum.ewm.request.model.ParticipationRequest;
+import ru.practicum.ewm.request.model.RequestStatus;
+import ru.practicum.ewm.request.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 import ru.practicum.stat.client.StatsClient;
@@ -28,10 +31,7 @@ import ru.practicum.stat.dto.ParamDto;
 import ru.practicum.stat.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -42,8 +42,10 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
     private final EventMapper eventMapper;
+    private final ParticipationRequestMapper requestMapper;
 
 
     // константа - начало отчета времени сбора статистики, можно вынести в properties, если нужно будет
@@ -62,8 +64,6 @@ public class EventServiceImpl implements EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + userId + " was not found"));
 
-        // Todo загружаем категорию из репозитория категорий, пока заглушка
-//        Category cat = new Category(-1L, "222222");
         Category cat = categoryRepository.getCategory(newEventDto.getCategory());
 
         Event event = eventMapper.toEvent(newEventDto, cat, user);
@@ -188,8 +188,6 @@ public class EventServiceImpl implements EventService {
 
         Category cat = null;
         if (body.getCategory() != null) {
-            // Todo загружаем категорию из репозитория категорий, пока заглушка
-//            cat = new Category(-1L, "222222");
             cat = categoryRepository.getCategory(body.getCategory());
         }
         eventMapper.updateEventFromUserRequest(body, event, cat);
@@ -200,8 +198,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> hits = fetchViews(uris);
         Long views = hits.getOrDefault(event.getId(), 0L);
 
-        // Todo загружаем запросы из репозитория запросов, пока заглушка
-        Long confirmedRequests = -1L;
+        long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
         return eventMapper.toEventFullDto(event, confirmedRequests, views);
     }
@@ -215,8 +212,6 @@ public class EventServiceImpl implements EventService {
 
         Category category = null;
         if (body.getCategory() != null) {
-            // Todo загружаем категорию из репозитория категорий как будет готов, пока заглушка
-//            category = new Category(-1L, "222222"); // временная заглушка
             category = categoryRepository.getCategory(body.getCategory());
         }
 
@@ -259,7 +254,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> hits = fetchViews(uris);
         Long views = hits.getOrDefault(event.getId(), 0L);
 
-        Long confirmedRequests = -1L; // TODO заменить на реальный запрос, пока заглушка, потом допилим
+        long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
         return eventMapper.toEventFullDto(event, confirmedRequests, views);
     }
@@ -288,18 +283,86 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
         }
 
-        throw new RuntimeException("Метод не реализован");
-        // ToDo запрашиваем в репозитории ParticipationRequest заявки с таким eventId.В полученных ParticipationRequest
-        // можно проверить сразу что initiator.id == userId, тогда и отдельный  запрос не нужен?
+        List<ParticipationRequest> requests = requestRepository.findByEventId(eventId);
+
+        return requestMapper.toParticipationRequestDto(requests);
 
     }
 
     @Override
-    public EventRequestStatusUpdateResult updateRequestStatuses(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
+    @Transactional
+    public EventRequestStatusUpdateResult updateRequestStatuses(Long userId, Long eventId, EventRequestStatusUpdateRequest updateRequest) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-        // ToDo реализация метода после реализации запросов
-        throw new RuntimeException("Метод не реализован");
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("Event with id=" + eventId + " not found for user with id=" + userId);
+        }
 
+        List<ParticipationRequest> requests = requestRepository.findByIdIn(updateRequest.getRequestIds());
+
+        // В ТЗ: "статус можно изменить только у заявок, находящихся в состоянии ожидания"
+        for (ParticipationRequest r : requests) {
+            if (!r.getStatus().equals(RequestStatus.PENDING)) {
+                throw new ConditionsNotMetException("Only requests with PENDING status can be reviewed");
+            }
+            if (!r.getEvent().getId().equals(eventId)) {
+                throw new ConditionsNotMetException("The requests are not related to event with id = " + eventId);
+            }
+        }
+
+        // "если для события лимит заявок равен 0 или отключена пре-модерация заявок, то подтверждение заявок не требуется"
+        // т.е. такие случаи сюда не попадают вообще? или автоматом ставить CONFIRMED? или как это понимать?
+
+        List<ParticipationRequest> approved = new ArrayList<>();
+        List<ParticipationRequest> rejected = new ArrayList<>();
+
+        long confirmedRequests = 0L;
+        long limit = event.getParticipantLimit();
+
+        if ((!event.getRequestModeration() || event.getParticipantLimit() == 0)
+                && updateRequest.getStatus().equals(RequestStatus.CONFIRMED)) {
+            approved = requests;
+        } else if (updateRequest.getStatus().equals(RequestStatus.REJECTED)) {
+            rejected = requests;
+        } else {
+            confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
+
+            for (ParticipationRequest r : requests) {
+                if (confirmedRequests < limit) {
+                    approved.add(r);
+                    confirmedRequests++;
+                } else {
+                    rejected.add(r);
+                }
+            }
+        }
+
+        updateStatuses(approved, RequestStatus.CONFIRMED);
+        updateStatuses(rejected, RequestStatus.REJECTED);
+
+        // "если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить"
+        if (limit > 0 && confirmedRequests >= limit) {
+            requestRepository.updateStatusByEventId(eventId, RequestStatus.PENDING, RequestStatus.REJECTED);
+        }
+
+        return requestMapper.toEventRequestStatusUpdateResult(approved, rejected);
+    }
+
+    private void updateStatuses(List<ParticipationRequest> requests, RequestStatus status) {
+        if (requests.isEmpty()) {
+            return;
+        }
+        List<Long> ids = requests.stream()
+                .map(ParticipationRequest::getId)
+                .collect(Collectors.toList());
+        int updated = requestRepository.updateStatusByIdIn(ids, status);
+        if (updated != ids.size()) {
+            throw new IllegalStateException(String.format(
+                    "Failed to update all requests in the database. Total: %d, updated: %d",
+                    ids.size(), updated));
+        }
+        requests.forEach(r -> r.setStatus(status));
     }
 
 
@@ -318,13 +381,17 @@ public class EventServiceImpl implements EventService {
     private Map<Long, Long> fetchViews(String[] uris) {
         ParamDto statRequestParam = ParamDto.builder()
                 .start(STATS_START_DATE)
-                .end(LocalDateTime.now())
+                .end(LocalDateTime.now().plusSeconds(1))
                 .uris(uris)
-                .unique(false)
+                .unique(true)
                 .build();
+
+        log.debug("Fetching views for uris: {}, params: {}", Arrays.toString(uris), statRequestParam);
 
         try {
             List<ViewStatsDto> stats = statsClient.get(statRequestParam);
+
+            log.debug("Stats received from client: {}", stats);
 
             if (stats.size() == 1 && stats.getFirst().getHits() == -1) {
                 log.error("Failed to fetch views from stats-service, returned hits = -1 (Fail marker)");

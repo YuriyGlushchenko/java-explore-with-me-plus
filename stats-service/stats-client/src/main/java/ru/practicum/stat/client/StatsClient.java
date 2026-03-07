@@ -48,19 +48,22 @@ public class StatsClient {
                 .path("/stats")
                 .queryParam("start", paramDto.getStart().format(FORMATTER))
                 .queryParam("end", paramDto.getEnd().format(FORMATTER))
-                .queryParam("uris", (Object) paramDto.getUris())
+                .queryParam("uris", paramDto.getUris()) // убрал (Object). Из-за этого не работала статистика
                 .queryParam("unique", paramDto.getUnique())
                 .build()
                 .encode()
                 .toUri();
-        try {
+                try {
             ResponseEntity<List<ViewStatsDto>> response = template.exchange(
                     uri,
                     GET,
                     null,
-                    new ParameterizedTypeReference<List<ViewStatsDto>>() {
-                    }
+                    new ParameterizedTypeReference<List<ViewStatsDto>>() {}
             );
+
+            log.info("=== STATS CLIENT RESPONSE: status={}, body={} ===",
+                    response.getStatusCode(), response.getBody());
+
             return response.getBody();
         } catch (RestClientException e) {
             log.warn("Ошибка при получении статистики: {}.", e.getMessage());

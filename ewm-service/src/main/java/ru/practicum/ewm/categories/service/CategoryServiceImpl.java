@@ -2,11 +2,11 @@ package ru.practicum.ewm.categories.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.categories.repository.CategoryRepository;
-import ru.practicum.ewm.categories.dto.CategoryMapper;
 import ru.practicum.ewm.categories.dto.CategoryDto;
+import ru.practicum.ewm.categories.dto.CategoryMapper;
 import ru.practicum.ewm.categories.dto.NewCategoryDto;
 import ru.practicum.ewm.categories.model.Category;
+import ru.practicum.ewm.categories.repository.CategoryRepository;
 import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
 
 import java.util.List;
