@@ -3,6 +3,7 @@ package ru.practicum.ewm.compilation.repository;
 import ru.practicum.ewm.compilation.model.Compilation;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CompilationRepository {
     Compilation postCompilation(Compilation compilation);
@@ -13,7 +14,7 @@ public interface CompilationRepository {
 
     List<Compilation> getCompilations(Boolean pinned, int from, int size);
 
-    Compilation getCompilationById(Long compId);
+    Optional<Compilation> getCompilationById(Long compId);
 
     boolean existsById(Long compId);
 

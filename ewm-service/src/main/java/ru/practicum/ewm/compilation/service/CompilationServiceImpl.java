@@ -38,7 +38,6 @@ public class CompilationServiceImpl implements CompilationService {
         return CompilationMapper.toCompilationDto(saved, eventDtos);
     }
 
-
     @Override
     @Transactional
     public void deleteCompilation(Long compId) {
@@ -51,22 +50,21 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     @Transactional
     public CompilationDto patchCompilation(Long compId, UpdateCompilationRequest updateRequest) {
-        if (!compilationRepository.existsById(compId)) {
-            throw new NotFoundException("Подборка не найдена");
-        }
+        Compilation compilation = compilationRepository.getCompilationById(compId)
+                .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
 
-        Compilation compilation = CompilationMapper.toCompilation(updateRequest);
+        CompilationMapper.updateCompilationFromRequest(updateRequest, compilation);
 
         Compilation updated = compilationRepository.patchCompilation(compId, compilation);
 
         List<Long> eventIds = updated.getEvents().stream()
                 .map(Event::getId)
                 .toList();
-
         List<EventShortDto> eventDtos = getEventShortDtos(eventIds);
 
         return CompilationMapper.toCompilationDto(updated, eventDtos);
     }
+
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, int from, int size) {
@@ -94,7 +92,8 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto getCompilationById(Long compId) {
-        Compilation compilation = compilationRepository.getCompilationById(compId);
+        Compilation compilation = compilationRepository.getCompilationById(compId)
+                .orElseThrow();
 
         List<Long> eventIds = compilation.getEvents().stream()
                 .map(Event::getId)

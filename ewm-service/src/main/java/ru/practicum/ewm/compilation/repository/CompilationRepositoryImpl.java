@@ -100,7 +100,7 @@ public class CompilationRepositoryImpl implements CompilationRepository {
     }
 
     @Override
-    public Compilation getCompilationById(Long compId) {
+    public Optional<Compilation> getCompilationById(Long compId) {
         String sqlComp = "SELECT * FROM compilations WHERE id = ?";
         String sqlEvents = "SELECT event_id FROM compilation_events WHERE compilation_id = ?";
         Compilation comp = Objects.requireNonNull(
@@ -118,7 +118,7 @@ public class CompilationRepositoryImpl implements CompilationRepository {
                 .map(id -> Event.builder().id(id).build())
                 .toList());
 
-        return comp;
+        return Optional.of(comp);
     }
 
     @Override
