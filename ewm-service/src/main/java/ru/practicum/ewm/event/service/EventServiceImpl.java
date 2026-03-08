@@ -349,6 +349,23 @@ public class EventServiceImpl implements EventService {
         return requestMapper.toEventRequestStatusUpdateResult(approved, rejected);
     }
 
+    @Override
+    public List<EventShortDto> getShortDtosByIds(Collection<Long> eventId) {
+        if (eventId == null || eventId.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Event> events = eventRepository.findAllByIdIn(eventId);
+
+        List<EventShortDto> dtos = events.stream()
+                .map(event -> eventMapper.toEventShortDto(event, 0L, 0L))
+                .collect(Collectors.toList());
+
+        enrichEventsWithViews(dtos);
+
+        return dtos;
+    }
+
     private void updateStatuses(List<ParticipationRequest> requests, RequestStatus status) {
         if (requests.isEmpty()) {
             return;

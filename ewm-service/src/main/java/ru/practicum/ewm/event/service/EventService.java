@@ -7,6 +7,7 @@ import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface EventService {
@@ -30,6 +31,8 @@ public interface EventService {
     List<ParticipationRequestDto> getParticipationRequests(Long userId, Long eventId);
 
     EventRequestStatusUpdateResult updateRequestStatuses(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
+
+    List<EventShortDto> getShortDtosByIds(Collection<Long> eventIds);
 
 
 }

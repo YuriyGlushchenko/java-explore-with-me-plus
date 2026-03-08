@@ -69,7 +69,6 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public boolean existsById(Long catId) {
         String sql = "SELECT COUNT(*) FROM categories WHERE id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, catId);
-        return count != null && count > 0;
+        return count > 0;
     }
-
 }
