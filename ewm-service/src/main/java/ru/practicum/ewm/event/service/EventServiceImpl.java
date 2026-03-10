@@ -48,9 +48,6 @@ public class EventServiceImpl implements EventService {
     private final ParticipationRequestMapper requestMapper;
 
 
-    // константа - начало отчета времени сбора статистики, можно вынести в properties, если нужно будет
-    private static final LocalDateTime STATS_START_DATE = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-
     @Transactional
     @Override
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
@@ -195,7 +192,7 @@ public class EventServiceImpl implements EventService {
         event = eventRepository.save(event);
 
         String[] uris = {"/events/" + event.getId()};
-        Map<Long, Long> hits = fetchViews(uris);
+        Map<Long, Long> hits = fetchViews(uris, event.getEventDate());
         Long views = hits.getOrDefault(event.getId(), 0L);
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
@@ -251,7 +248,7 @@ public class EventServiceImpl implements EventService {
         event = eventRepository.save(event);
 
         String[] uris = {"/events/" + event.getId()};
-        Map<Long, Long> hits = fetchViews(uris);
+        Map<Long, Long> hits = fetchViews(uris, event.getEventDate());
         Long views = hits.getOrDefault(event.getId(), 0L);
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
@@ -384,20 +381,26 @@ public class EventServiceImpl implements EventService {
 
 
     private <T extends Viewable> void enrichEventsWithViews(List<T> events) {
+        LocalDateTime minEventDate = events.stream()
+                .map(Viewable::getPublishedOn)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+
         String[] uris = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .toArray(String[]::new);
 
-        Map<Long, Long> hits = fetchViews(uris);
+        Map<Long, Long> hits = fetchViews(uris, minEventDate);
 
         events.forEach(event ->
                 event.setViews(hits.getOrDefault(event.getId(), 0L))
         );
     }
 
-    private Map<Long, Long> fetchViews(String[] uris) {
+    private Map<Long, Long> fetchViews(String[] uris, LocalDateTime date) {
         ParamDto statRequestParam = ParamDto.builder()
-                .start(STATS_START_DATE)
+                .start(date)
                 .end(LocalDateTime.now().plusSeconds(1))
                 .uris(uris)
                 .unique(true)
@@ -429,7 +432,7 @@ public class EventServiceImpl implements EventService {
 
     private void enrichEventWithViews(EventFullDto event) {
         String[] uris = {"/events/" + event.getId()};
-        Map<Long, Long> hits = fetchViews(uris);
+        Map<Long, Long> hits = fetchViews(uris, event.getPublishedOn());
         event.setViews(hits.getOrDefault(event.getId(), 0L));
     }
 
@@ -440,7 +443,6 @@ public class EventServiceImpl implements EventService {
 
     private void sendHit(String uri, String ip, LocalDateTime time) {
         EndpointHitDto hitDto = EndpointHitDto.builder()
-                .app("ewm-main-service")
                 .uri(uri)
                 .ip(ip)
                 .timestamp(time)

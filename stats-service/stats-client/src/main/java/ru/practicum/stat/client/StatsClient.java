@@ -26,13 +26,16 @@ public class StatsClient {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     final RestTemplate template;
     final String statUrl;
+    private final String appName;
 
-    public StatsClient(RestTemplate template, @Value("${stats-server.url}") String statUrl) {
+    public StatsClient(RestTemplate template, @Value("${stats-server.url}") String statUrl, @Value("${app.name}") String appName) {
         this.template = template;
         this.statUrl = statUrl;
+        this.appName = appName;
     }
 
     public void hit(EndpointHitDto endpointHit) {
+        endpointHit.setApp(appName);
         try {
             HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(endpointHit);
             template.exchange(statUrl + "/hit", POST, requestEntity, Object.class);

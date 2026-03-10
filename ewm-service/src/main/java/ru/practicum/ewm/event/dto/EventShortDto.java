@@ -1,8 +1,7 @@
 package ru.practicum.ewm.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +18,6 @@ import java.time.LocalDateTime;
 public class EventShortDto implements Viewable {
     private Long id;
 
-    @NotBlank
-    @Size(min = 20, max = 2000)
     private String annotation;
 
     private CategoryDto category;
@@ -34,9 +31,12 @@ public class EventShortDto implements Viewable {
 
     private Boolean paid;
 
-    @NotBlank
-    @Size(min = 3, max = 120)
+    @JsonIgnore
+    // подгрузим даты публикаций, для расчета минимальной даты для запроса статистики, но клиенту отправлять не будем
+    private LocalDateTime publishedOn;
+
     private String title;
 
-    private Long views;  // из сервиса статистики
+    private Long views;  // подгружаем отдельно из сервиса статистики
+
 }
