@@ -7,6 +7,8 @@ import ru.practicum.ewm.categories.dto.CategoryMapper;
 import ru.practicum.ewm.categories.dto.NewCategoryDto;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
+import ru.practicum.ewm.event.repository.EventRepository;
+import ru.practicum.ewm.exceptions.exceptions.ConditionsNotMetException;
 import ru.practicum.ewm.exceptions.exceptions.NotFoundException;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public CategoryDto postCategory(NewCategoryDto newCategoryDto) {
@@ -27,6 +30,9 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(Long catId) {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException("Категория с id = " + catId + " не найдена");
+        }
+        if (eventRepository.existsByCategoryId(catId)) {
+            throw new ConditionsNotMetException("Есть события в этой категории, удалить нельзя");
         }
         categoryRepository.deleteCategory(catId);
     }

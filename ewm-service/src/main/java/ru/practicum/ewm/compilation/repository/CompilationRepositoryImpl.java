@@ -2,6 +2,7 @@ package ru.practicum.ewm.compilation.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,7 @@ import java.util.*;
 public class CompilationRepositoryImpl implements CompilationRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
     public Compilation postCompilation(Compilation compilation) {
@@ -70,10 +72,10 @@ public class CompilationRepositoryImpl implements CompilationRepository {
         List<Object> params = new ArrayList<>();
 
         if (pinned != null) {
-            sql += "WHERE pinned = ? ";
+            sql += "WHERE pinned = ?";
             params.add(pinned);
         }
-        sql += "ORDER BY id LIMIT ? OFFSET ?";
+        sql += " ORDER BY id LIMIT ? OFFSET ?";
         params.add(size);
         params.add(from);
 
@@ -85,17 +87,29 @@ public class CompilationRepositoryImpl implements CompilationRepository {
                                 .build(),
                 params.toArray()
         );
-        for (Compilation comp : compilations) {
-            List<Long> eventIds = jdbcTemplate.queryForList(
-                    "SELECT event_id FROM compilation_events WHERE compilation_id = ?",
-                    Long.class,
-                    comp.getId()
-            );
-            comp.setEvents(eventIds.stream()
-                    .map(id -> Event.builder().id(id).build())
-                    .toList());
+
+        if (compilations.isEmpty()) {
+            return Collections.emptyList();
         }
 
+        List<Long> compIds = compilations.stream()
+                .map(Compilation::getId)
+                .toList();
+
+        String eventsSql = "SELECT compilation_id, event_id FROM compilation_events WHERE compilation_id IN (:ids)";
+
+        Map<Long, List<Event>> eventsByCompId = new HashMap<>();
+
+        namedParameterJdbcTemplate.query(eventsSql, Map.of("ids", compIds), rs -> {
+            long compId = rs.getLong("compilation_id");
+            long eventId = rs.getLong("event_id");
+            eventsByCompId.computeIfAbsent(compId, k -> new ArrayList<>())
+                    .add(Event.builder().id(eventId).build());
+        });
+
+        for (Compilation comp : compilations) {
+            comp.setEvents(eventsByCompId.getOrDefault(comp.getId(), Collections.emptyList()));
+        }
         return compilations;
     }
 
@@ -130,8 +144,10 @@ public class CompilationRepositoryImpl implements CompilationRepository {
 
     private void saveEventsRelations(Long compId, List<Event> events) {
         String sql = "INSERT INTO compilation_events (compilation_id, event_id) VALUES (?, ?)";
-        for (Event event : events) {
-            jdbcTemplate.update(sql, compId, event.getId());
-        }
+
+        jdbcTemplate.batchUpdate(sql, events, events.size(), (ps, event) -> {
+            ps.setLong(1, compId);
+            ps.setLong(2, event.getId());
+        });
     }
 }
