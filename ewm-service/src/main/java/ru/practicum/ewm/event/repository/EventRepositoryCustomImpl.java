@@ -43,6 +43,7 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
                         event.eventDate,
                         Projections.constructor(UserShortDto.class, event.initiator.id, event.initiator.name), // проекция в DTO
                         event.paid,
+                        event.publishedOn,
                         event.title,
                         Expressions.asNumber(0L).as("views")))
                 .from(event)
