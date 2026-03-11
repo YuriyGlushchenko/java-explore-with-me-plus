@@ -1,10 +1,10 @@
 package ru.practicum.ewm.comments.model;
 
+import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.user.model.User;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity

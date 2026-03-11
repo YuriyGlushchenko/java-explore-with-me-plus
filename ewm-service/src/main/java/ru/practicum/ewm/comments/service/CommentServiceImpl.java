@@ -30,7 +30,6 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
-    private final CommentMapper commentMapper;
 
     @Override
     public List<CommentShortDto> getEventComments(Long eventId, int from, int size) {
@@ -38,7 +37,7 @@ public class CommentServiceImpl implements CommentService {
         List<Comment> comments = commentRepository.findByEventIdAndStatusOrderByCreatedDesc(
                 eventId, CommentStatus.APPROVED, page);  // публичный запрос, по этому только APPROVED
         return comments.stream()
-                .map(commentMapper::toShortDto)
+                .map(CommentMapper::toShortDto)
                 .collect(Collectors.toList());
     }
 
@@ -46,7 +45,7 @@ public class CommentServiceImpl implements CommentService {
     public CommentShortDto getComment(Long commentId) {
         Comment comment = commentRepository.findByIdAndStatus(commentId, CommentStatus.APPROVED)
                 .orElseThrow(() -> new NotFoundException("Comment with id=" + commentId + " not found or not approved"));
-        return commentMapper.toShortDto(comment);
+        return CommentMapper.toShortDto(comment);
     }
 
     @Override
@@ -61,9 +60,9 @@ public class CommentServiceImpl implements CommentService {
             throw new ConditionsNotMetException("Cannot comment on unpublished event");
         }
 
-        Comment comment = commentMapper.toComment(dto, author, event);
+        Comment comment = CommentMapper.toComment(dto, author, event);
         comment = commentRepository.save(comment);
-        return commentMapper.toFullDto(comment);
+        return CommentMapper.toFullDto(comment);
     }
 
     @Override
@@ -86,9 +85,9 @@ public class CommentServiceImpl implements CommentService {
             throw new ConditionsNotMetException("Text can only be changed when comment is in PENDING status");
         }
 
-        commentMapper.updateCommentFromUserRequest(dto, comment);
+        CommentMapper.updateCommentFromUserRequest(dto, comment);
         comment = commentRepository.save(comment);
-        return commentMapper.toFullDto(comment);
+        return CommentMapper.toFullDto(comment);
     }
 
     @Override
@@ -111,7 +110,7 @@ public class CommentServiceImpl implements CommentService {
         PageRequest page = PageRequest.of(from / size, size);
         List<Comment> comments = commentRepository.findByStatusOrderByCreatedAsc(CommentStatus.PENDING, page);
         return comments.stream()
-                .map(commentMapper::toFullDto)
+                .map(CommentMapper::toFullDto)
                 .collect(Collectors.toList());
     }
 
@@ -124,9 +123,9 @@ public class CommentServiceImpl implements CommentService {
         User moderator = userRepository.findById(moderatorId)
                 .orElseThrow(() -> new NotFoundException("Moderator with id=" + moderatorId + " not found"));
 
-        commentMapper.updateCommentFromAdminRequest(dto, comment, moderator);
+        CommentMapper.updateCommentFromAdminRequest(dto, comment, moderator);
         comment = commentRepository.save(comment);
-        return commentMapper.toFullDto(comment);
+        return CommentMapper.toFullDto(comment);
     }
 
     @Override
@@ -138,7 +137,7 @@ public class CommentServiceImpl implements CommentService {
         User moderator = userRepository.findById(moderatorId)
                 .orElseThrow(() -> new NotFoundException("Moderator with id=" + moderatorId + " not found"));
 
-        commentMapper.adminDeleteComment(comment, moderator);
+        CommentMapper.adminDeleteComment(comment, moderator);
         commentRepository.save(comment);
     }
 }

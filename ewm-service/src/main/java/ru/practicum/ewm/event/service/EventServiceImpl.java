@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.categories.model.Category;
 import ru.practicum.ewm.categories.repository.CategoryRepository;
+import ru.practicum.ewm.comments.model.CommentStatus;
+import ru.practicum.ewm.comments.repository.CommentRepository;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.dto.paramDto.AdminUserEventParam;
 import ru.practicum.ewm.event.dto.paramDto.EventRepositoryParam;
@@ -46,6 +48,7 @@ public class EventServiceImpl implements EventService {
     private final StatsClient statsClient;
     private final EventMapper eventMapper;
     private final ParticipationRequestMapper requestMapper;
+    private final CommentRepository commentRepository;
 
 
     @Transactional
@@ -84,6 +87,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventsWithViews(events);
+        enrichEventsListWithCommentsCount(events);
 
         return events;
     }
@@ -98,6 +102,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventsWithViews(events);
+        enrichEventsListWithCommentsCount(events);
 
         if (param.getSortOrDefault() == EventSort.VIEWS) {  // из репозитория приходят уже отсортированными по дате
             events.sort(Comparator.comparing(EventShortDto::getViews).reversed());
@@ -118,6 +123,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventsWithViews(events);
+        enrichEventsListWithCommentsCount(events);
 
         return events;
     }
@@ -133,6 +139,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventWithViews(event);
+        enrichEventWithCommentsCount(event);
 
         return event;
     }
@@ -197,7 +204,10 @@ public class EventServiceImpl implements EventService {
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        return eventMapper.toEventFullDto(event, confirmedRequests, views);
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(event, confirmedRequests, views);
+        enrichEventWithCommentsCount(eventFullDto);
+
+        return eventFullDto;
     }
 
 
@@ -253,7 +263,10 @@ public class EventServiceImpl implements EventService {
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        return eventMapper.toEventFullDto(event, confirmedRequests, views);
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(event, confirmedRequests, views);
+        enrichEventWithCommentsCount(eventFullDto);
+
+        return eventFullDto;
     }
 
     public EventFullDto findEventById(String uri, String ip, Long id) {
@@ -267,6 +280,7 @@ public class EventServiceImpl implements EventService {
 
         sendHit(uri, ip, LocalDateTime.now());
         enrichEventWithViews(event);
+        enrichEventWithCommentsCount(event);
 
         return event;
     }
@@ -359,6 +373,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
 
         enrichEventsWithViews(dtos);
+        enrichEventsListWithCommentsCount(dtos);
 
         return dtos;
     }
@@ -450,4 +465,47 @@ public class EventServiceImpl implements EventService {
 
         statsClient.hit(hitDto);
     }
+
+    private <T extends Commentable> void enrichEventsListWithCommentsCount(List<T> eventDtos) {
+        if (eventDtos.isEmpty()) return;
+
+        List<Long> ids = eventDtos.stream()
+                .map(Commentable::getId)
+                .collect(Collectors.toList());
+
+        // просто переделываем список из массивов [id, count] в Map <id, count>
+        List<Object[]> counts = commentRepository.countByEventIdInAndStatus(ids, CommentStatus.APPROVED);
+        Map<Long, Long> countsMap = counts.stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0], // берем первую цифру из массива - это eventId
+                        arr -> (Long) arr[1]  // берем вторую цифру из массива - это count
+                ));
+
+        eventDtos.forEach(item -> item.setCommentsCount(countsMap.getOrDefault(item.getId(), 0L)));
+    }
+
+    private void enrichEventWithCommentsCount(EventFullDto event) {
+        enrichEventsListWithCommentsCount(List.of(event));
+    }
+
+//    private void enrichEventsWithLastComments(List<EventFullDto> events) {
+//        if (events.isEmpty()) return;
+//
+//        List<Long> eventIds = events.stream()
+//                .map(EventFullDto::getId)
+//                .collect(Collectors.toList());
+//
+//        List<Comment> comments = commentRepository.findByEventIdInAndStatusOrderByCreatedDesc(
+//                eventIds, CommentStatus.APPROVED);
+//
+//        Map<Long, List<CommentShortDto>> commentsMap = comments.stream()
+//                .collect(Collectors.groupingBy(
+//                        c -> c.getEvent().getId(),
+//                        Collectors.mapping(CommentMapper::toShortDto, Collectors.toList())
+//                ));
+//
+//        events.forEach(event ->
+//                event.setComments(commentsMap.getOrDefault(event.getId(), Collections.emptyList()))
+//        );
+//    }
 }
