@@ -85,6 +85,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventsWithViews(events);
+        enrichEventsListWithCommentsCount(events);
 
         return events;
     }
