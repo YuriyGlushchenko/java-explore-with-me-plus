@@ -1,9 +1,8 @@
 package ru.practicum.ewm.user.dto;
 
-import org.springframework.stereotype.Component;
 import ru.practicum.ewm.user.model.User;
 
-@Component
+
 public class UserMapper {
     public static User toUser(NewUserRequest request) {
         return User.builder()

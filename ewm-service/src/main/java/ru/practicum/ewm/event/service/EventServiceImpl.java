@@ -46,8 +46,6 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient statsClient;
-    private final EventMapper eventMapper;
-    private final ParticipationRequestMapper requestMapper;
     private final CommentRepository commentRepository;
 
 
@@ -66,11 +64,11 @@ public class EventServiceImpl implements EventService {
 
         Category cat = categoryRepository.getCategory(newEventDto.getCategory());
 
-        Event event = eventMapper.toEvent(newEventDto, cat, user);
+        Event event = EventMapper.toEvent(newEventDto, cat, user);
 
         event = eventRepository.save(event);
 
-        return eventMapper.toEventFullDto(event, 0L, 0L);
+        return EventMapper.toEventFullDto(event, 0L, 0L);
     }
 
     @Override
@@ -87,7 +85,6 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventsWithViews(events);
-        enrichEventsListWithCommentsCount(events);
 
         return events;
     }
@@ -194,7 +191,7 @@ public class EventServiceImpl implements EventService {
         if (body.getCategory() != null) {
             cat = categoryRepository.getCategory(body.getCategory());
         }
-        eventMapper.updateEventFromUserRequest(body, event, cat);
+        EventMapper.updateEventFromUserRequest(body, event, cat);
 
         event = eventRepository.save(event);
 
@@ -204,7 +201,7 @@ public class EventServiceImpl implements EventService {
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        EventFullDto eventFullDto = eventMapper.toEventFullDto(event, confirmedRequests, views);
+        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, confirmedRequests, views);
         enrichEventWithCommentsCount(eventFullDto);
 
         return eventFullDto;
@@ -222,7 +219,7 @@ public class EventServiceImpl implements EventService {
             category = categoryRepository.getCategory(body.getCategory());
         }
 
-        eventMapper.updateEventFromAdminRequest(body, event, category);
+        EventMapper.updateEventFromAdminRequest(body, event, category);
 
         if (body.getStateAction() != null) {
             switch (body.getStateAction()) {
@@ -263,7 +260,7 @@ public class EventServiceImpl implements EventService {
 
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        EventFullDto eventFullDto = eventMapper.toEventFullDto(event, confirmedRequests, views);
+        EventFullDto eventFullDto = EventMapper.toEventFullDto(event, confirmedRequests, views);
         enrichEventWithCommentsCount(eventFullDto);
 
         return eventFullDto;
@@ -296,7 +293,7 @@ public class EventServiceImpl implements EventService {
 
         List<ParticipationRequest> requests = requestRepository.findByEventId(eventId);
 
-        return requestMapper.toParticipationRequestDto(requests);
+        return ParticipationRequestMapper.toParticipationRequestDto(requests);
 
     }
 
@@ -357,7 +354,7 @@ public class EventServiceImpl implements EventService {
             requestRepository.updateStatusByEventId(eventId, RequestStatus.PENDING, RequestStatus.REJECTED);
         }
 
-        return requestMapper.toEventRequestStatusUpdateResult(approved, rejected);
+        return ParticipationRequestMapper.toEventRequestStatusUpdateResult(approved, rejected);
     }
 
     @Override
@@ -369,7 +366,7 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findAllByIdIn(eventId);
 
         List<EventShortDto> dtos = events.stream()
-                .map(event -> eventMapper.toEventShortDto(event, 0L, 0L))
+                .map(event -> EventMapper.toEventShortDto(event, 0L, 0L))
                 .collect(Collectors.toList());
 
         enrichEventsWithViews(dtos);
