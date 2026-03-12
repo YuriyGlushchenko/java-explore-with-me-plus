@@ -26,13 +26,16 @@ public class StatsClient {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     final RestTemplate template;
     final String statUrl;
+    private final String appName;
 
-    public StatsClient(RestTemplate template, @Value("${stats-server.url}") String statUrl) {
+    public StatsClient(RestTemplate template, @Value("${stats-server.url}") String statUrl, @Value("${app.name}") String appName) {
         this.template = template;
         this.statUrl = statUrl;
+        this.appName = appName;
     }
 
     public void hit(EndpointHitDto endpointHit) {
+        endpointHit.setApp(appName);
         try {
             HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(endpointHit);
             template.exchange(statUrl + "/hit", POST, requestEntity, Object.class);
@@ -48,19 +51,22 @@ public class StatsClient {
                 .path("/stats")
                 .queryParam("start", paramDto.getStart().format(FORMATTER))
                 .queryParam("end", paramDto.getEnd().format(FORMATTER))
-                .queryParam("uris", (Object) paramDto.getUris())
+                .queryParam("uris", paramDto.getUris()) // убрал (Object). Из-за этого не работала статистика
                 .queryParam("unique", paramDto.getUnique())
                 .build()
                 .encode()
                 .toUri();
-        try {
+                try {
             ResponseEntity<List<ViewStatsDto>> response = template.exchange(
                     uri,
                     GET,
                     null,
-                    new ParameterizedTypeReference<List<ViewStatsDto>>() {
-                    }
+                    new ParameterizedTypeReference<List<ViewStatsDto>>() {}
             );
+
+            log.info("=== STATS CLIENT RESPONSE: status={}, body={} ===",
+                    response.getStatusCode(), response.getBody());
+
             return response.getBody();
         } catch (RestClientException e) {
             log.warn("Ошибка при получении статистики: {}.", e.getMessage());
