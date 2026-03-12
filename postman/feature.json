@@ -1373,6 +1373,7 @@
 			"listen": "prerequest",
 			"script": {
 				"type": "text/javascript",
+				"requests": {},
 				"exec": [
 					"API = class {",
 					"    constructor(postman, verbose = false, baseUrl = \"http://localhost:8080\") {",
@@ -1555,6 +1556,7 @@
 			"listen": "test",
 			"script": {
 				"type": "text/javascript",
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -1568,55 +1570,55 @@
 		},
 		{
 			"key": "eventId",
-			"value": ""
+			"value": 28
 		},
 		{
 			"key": "authorId",
-			"value": ""
+			"value": 62
 		},
 		{
 			"key": "commentText",
-			"value": ""
+			"value": "IK34BWfwppz72JUzmvj52m0O7rEQHuDQdfm1K3wppc3VQ3rxw9"
 		},
 		{
 			"key": "commentId",
-			"value": ""
+			"value": 25
 		},
 		{
 			"key": "from",
-			"value": ""
+			"value": "0"
 		},
 		{
 			"key": "size",
-			"value": ""
+			"value": "100"
 		},
 		{
 			"key": "updatedCommentText",
-			"value": ""
+			"value": "kD5fFjfo1nwg2EILKjUIuOeVbYX1KzInWYY6SncnpUiPeew1Rc"
 		},
 		{
 			"key": "adminId",
-			"value": ""
+			"value": 58
 		},
 		{
 			"key": "modCommentId",
-			"value": ""
+			"value": 24
 		},
 		{
 			"key": "modCommentText",
-			"value": ""
+			"value": "Cw3m6IE7qbKiaac3G0yT765ThpB7r333j8sQvnlBgHR2giSzoR"
 		},
 		{
 			"key": "deleteCommentId",
-			"value": ""
+			"value": 26
 		},
 		{
 			"key": "expectedCommentsCount",
-			"value": ""
+			"value": 1
 		},
 		{
 			"key": "initiatorId",
-			"value": ""
+			"value": 76
 		}
 	]
 }
