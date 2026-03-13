@@ -137,7 +137,7 @@ public class EventServiceImpl implements EventService {
         }
 
         enrichEventWithViews(event);
-        enrichEventWithCommentsCount(event);
+        enrichEventsListWithCommentsCount(List.of(event));
 
         return event;
     }
@@ -203,7 +203,7 @@ public class EventServiceImpl implements EventService {
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
         EventFullDto eventFullDto = EventMapper.toEventFullDto(event, confirmedRequests, views);
-        enrichEventWithCommentsCount(eventFullDto);
+        enrichEventsListWithCommentsCount(List.of(eventFullDto));
 
         return eventFullDto;
     }
@@ -262,7 +262,7 @@ public class EventServiceImpl implements EventService {
         long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
         EventFullDto eventFullDto = EventMapper.toEventFullDto(event, confirmedRequests, views);
-        enrichEventWithCommentsCount(eventFullDto);
+        enrichEventsListWithCommentsCount(List.of(eventFullDto));
 
         return eventFullDto;
     }
@@ -278,7 +278,7 @@ public class EventServiceImpl implements EventService {
 
         sendHit(uri, ip, LocalDateTime.now());
         enrichEventWithViews(event);
-        enrichEventWithCommentsCount(event);
+        enrichEventsListWithCommentsCount(List.of(event));
 
         return event;
     }
@@ -471,8 +471,8 @@ public class EventServiceImpl implements EventService {
                 .map(Commentable::getId)
                 .collect(Collectors.toList());
 
-        // просто переделываем список из массивов [id, count] в Map <id, count>
         List<Object[]> counts = commentRepository.countByEventIdInAndStatus(ids, CommentStatus.APPROVED);
+        // просто переделываем список из массивов [id, count] в Map <id, count>
         Map<Long, Long> countsMap = counts.stream()
                 .collect(Collectors.toMap(
                         arr -> (Long) arr[0], // берем первую цифру из массива - это eventId
@@ -481,29 +481,4 @@ public class EventServiceImpl implements EventService {
 
         eventDtos.forEach(item -> item.setCommentsCount(countsMap.getOrDefault(item.getId(), 0L)));
     }
-
-    private void enrichEventWithCommentsCount(EventFullDto event) {
-        enrichEventsListWithCommentsCount(List.of(event));
-    }
-
-//    private void enrichEventsWithLastComments(List<EventFullDto> events) {
-//        if (events.isEmpty()) return;
-//
-//        List<Long> eventIds = events.stream()
-//                .map(EventFullDto::getId)
-//                .collect(Collectors.toList());
-//
-//        List<Comment> comments = commentRepository.findByEventIdInAndStatusOrderByCreatedDesc(
-//                eventIds, CommentStatus.APPROVED);
-//
-//        Map<Long, List<CommentShortDto>> commentsMap = comments.stream()
-//                .collect(Collectors.groupingBy(
-//                        c -> c.getEvent().getId(),
-//                        Collectors.mapping(CommentMapper::toShortDto, Collectors.toList())
-//                ));
-//
-//        events.forEach(event ->
-//                event.setComments(commentsMap.getOrDefault(event.getId(), Collections.emptyList()))
-//        );
-//    }
 }
